@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp.Strategy — Нейро-Системний Аудит</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Intl Tel Input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'warm-sand': '#fcfcfb',
+                        'deep-slate': '#1e293b',
+                        'emerald-green': '#10b981',
+                        'emerald-hover': '#059669',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-warm-sand text-deep-slate font-sans antialiased neural-bg min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass-header px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" onclick="goToStep(1)">
+            <i data-lucide="brain" class="text-emerald-green"></i>
+            LevelUp.Strategy
+        </div>
+        <div id="progress-indicator" class="text-sm font-medium text-slate-500 bg-white/50 px-3 py-1 rounded-full border border-slate-200">
+            Крок 1: Вступ
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center px-4 sm:px-6 lg:px-8 py-12 overflow-x-hidden">
+
+        <!-- STEP 1: Hero Section -->
+        <section id="step-1" class="w-full max-w-5xl flex flex-col items-center text-center animate-fade-in">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                Перестаньте боротися з хаосом<br/> 
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-green to-teal-500">Почніть керувати мозком</span>
+            </h1>
+            <p class="text-lg sm:text-xl text-slate-600 max-w-3xl mb-10 leading-relaxed">
+                Ваша продуктивність залежить не від сили волі, а від налаштування вашої біологічної та цифрової систем. Пройдіть швидкий аудит, щоб побачити свої «дірки» в системі
+            </p>
+            <button onclick="goToStep(2)" class="bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-10 rounded-full text-lg shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 mb-20">
+                Почати аудит <i data-lucide="arrow-right"></i>
+            </button>
+
+            <!-- Methodology Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full text-left">
+                <!-- Card 1 -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
+                        <i data-lucide="folder-kanban"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Звільніть свій розум</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Ми створимо ваш "Зовнішній мозок". Простір, де ідеї не губляться, а префронтальна кора відпочиває від запам'ятовування.
+                    </p>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
+                        <i data-lucide="target"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Від мрій до кліків</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Розбиваємо глобальні цілі на мікро-кроки. Ваш мозок перестане вмикати опір і почне діяти автоматично.
+                    </p>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Стан потоку</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Налаштуємо графік за циркадними ритмами. Робіть важливе на піку енергії, а не коли доведеться.
+                    </p>
+                </div>
+                <!-- Card 4 -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-[24px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
+                        <i data-lucide="bar-chart-3"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Розумна дисципліна</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Система зворотного зв'язку. Аналізуємо те, що заважає рости, і перетворюємо помилки на стратегію.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 2: Interactive Quiz -->
+        <section id="step-2" class="w-full max-w-2xl hidden flex-col items-center">
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 rounded-full h-2 mb-8 overflow-hidden">
+                <div id="quiz-progress" class="bg-emerald-green h-2 rounded-full transition-all duration-500 ease-out" style="width: 25%"></div>
+            </div>
+            
+            <div class="bg-white p-8 sm:p-10 rounded-[32px] shadow-xl shadow-slate-200/50 w-full border border-slate-100">
+                <div id="quiz-container" class="min-h-[300px] flex flex-col justify-center relative">
+                    <!-- Questions will be injected here via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 3: Results -->
+        <section id="step-3" class="w-full max-w-4xl hidden flex-col items-center animate-fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ваш Нейро-Профіль</h2>
+                <p class="text-slate-600 text-lg">Ось як ваш мозок взаємодіє з навантаженням зараз</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-10 w-full mb-12">
+                <!-- Radar Chart -->
+                <div class="w-full md:w-1/2 bg-white p-6 rounded-[32px] shadow-lg border border-slate-100 flex items-center justify-center">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+
+                <!-- Analysis Text -->
+                <div class="w-full md:w-1/2 flex flex-col justify-center">
+                    <div id="result-status-badge" class="inline-block px-4 py-2 rounded-full bg-amber-100 text-amber-800 font-semibold text-sm mb-4 self-start">
+                        Аналіз...
+                    </div>
+                    <h3 id="result-title" class="text-2xl font-bold mb-4">Системний потенціал</h3>
+                    <p id="result-description" class="text-slate-600 mb-6 leading-relaxed">
+                        Ви вже маєте базову дисципліну. Тепер нам потрібно налаштувати її так, щоб вона працювала на автоматизмі за принципами 'Атомних звичок' та другого мозку.
+                    </p>
+                    
+                    <div class="bg-slate-50 p-6 rounded-[24px] border border-slate-100">
+                        <h4 class="font-semibold mb-4">На стратегічному розборі ми:</h4>
+                        <ul class="space-y-3 text-sm text-slate-700">
+                            <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-emerald-green shrink-0"></i> Визначимо індивідуальні "дірки" у вашій продуктивності</li>
+                            <li class="flex items-start gap-2"><i data-lucide="pen-tool" class="w-5 h-5 text-emerald-green shrink-0"></i> Підберемо ваш тип трекера (цифровий чи аналоговий)</li>
+                            <li class="flex items-start gap-2"><i data-lucide="zap" class="w-5 h-5 text-emerald-green shrink-0"></i> Побудуємо план захисту вашої енергії</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Area -->
+            <div class="flex flex-col sm:flex-row gap-4 w-full max-w-2xl justify-center mt-8">
+                <!-- Primary CTA: View and Choose Tariff -->
+                <button onclick="clickViewFormats()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition duration-200 text-center block shadow-lg shadow-teal-600/20 transform hover:-translate-y-0.5 active:translate-y-0 text-sm">
+                    Переглянути та обрати формат участі ➔
+                </button>
+
+                <!-- Secondary Outline CTA: Customize System -->
+                <button onclick="openSystemModal()" class="flex-1 bg-transparent border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold py-4 px-6 rounded-xl transition duration-200 text-center block transform hover:-translate-y-0.5 active:translate-y-0 text-sm">
+                    Підібрати систему під мій результат
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 4: Pricing -->
+        <section id="step-4" class="w-full max-w-6xl hidden flex-col items-center animate-fade-in">
+            <!-- Кнопка повернення до результатів тесту -->
+            <button type="button" onclick="goToStep(3)" class="self-start mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition duration-150 group cursor-pointer">
+                <span>←</span> <span class="group-hover:underline">Назад до мого нейро-профілю</span>
+            </button>
+
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">ТАРИФИ ТА ФОРМАТИ НАВЧАННЯ</h2>
+                <p class="text-slate-600 text-lg">Оберіть шлях до своєї продуктивності</p>
+            </div>
+
+            <!-- Bento Course Grid (3 columns) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full items-stretch">
+                <!-- Tariff 1: ЦИФРОВИЙ INBOX -->
+                <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.02] transition-all flex flex-col">
+                    <h3 class="text-xl font-bold mb-2">ЦИФРОВИЙ INBOX</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">Самостійно</p>
+                    <div class="text-3xl font-bold mb-6">700 <span class="text-base font-normal text-slate-500">грн</span></div>
+                    <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-600">
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> 4 базові уроки системи CODE</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Практичні гайди та завдання</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Доступ до шаблонів та баз даних</li>
+                    </ul>
+                    <button onclick="selectTariffAndProceed('Цифровий Inbox')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto">
+                        Отримати доступ
+                    </button>
+                </div>
+
+                <!-- Tariff 2: НЕЙРО-СПРИНТ -->
+                <div class="bg-deep-slate text-white p-8 rounded-[32px] shadow-xl hover:scale-105 transition-all relative flex flex-col border border-slate-700">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-wider">
+                        Групова практика
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 mt-2">НЕЙРО-СПРИНТ</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">3 тижні щільного фокусу</p>
+                    <div class="text-3xl font-bold mb-6">5 200 <span class="text-base font-normal text-slate-400">грн</span></div>
+                    <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-300">
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Все, що у Тарифі 1</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Формат: 1 урок-інструкція + 1 жива сесія-розбір на тиждень</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Робота в групі (3-10 людей)</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Перевірка домашніх завдань</li>
+                    </ul>
+                    <button onclick="selectTariffAndProceed('Нейро-Спринт')" class="w-full text-center block bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-full transition-colors mt-auto">
+                        Забронювати місце в групі
+                    </button>
+                </div>
+
+                <!-- Tariff 3: АРХІТЕКТОР СИСТЕМ -->
+                <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.02] transition-all flex flex-col">
+                    <h3 class="text-xl font-bold mb-2">АРХІТЕКТОР СИСТЕМ</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">Індивідуально під ключ</p>
+                    <div class="text-2xl font-bold mb-6 text-slate-700 italic">За запитом</div>
+                    <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-600">
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Повна кастомізація під ваші бізнес- та життєві процеси</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Інтеграція AI-агентів для рутинних завдань</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Особистий супровід та менторинг</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Адаптація під РДУГ та навантаження</li>
+                    </ul>
+                    <button onclick="selectTariffAndProceed('Архітектор Систем')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto">
+                        Подати заявку
+                    </button>
+                </div>
+            </div>
+
+            <!-- Special Offer: Cognitive Audit -->
+            <div class="w-full mt-12 bg-teal-50/50 border border-teal-100 rounded-[32px] p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+                <div class="flex-grow">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 text-teal-800 text-xs font-semibold mb-4">
+                        <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ПОТРЕБУЄТЕ ШВИДКОГО РІШЕННЯ БЕЗ ПРОХОДЖЕННЯ КУРСІВ?
+                    </div>
+                    <h4 class="text-xl font-bold text-deep-slate mb-2">Персональний когнітивний аудит</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed max-w-2xl">
+                        60-хвилинна глибока діагностика з автором системи. Ми знайдемо головні «петлі», які спалюють до 40% вашої енергії, і складемо покроковий план виходу з хаосу.
+                    </p>
+                    <p class="text-xs text-slate-400 mt-2">
+                        * Якщо ви перейдете в індивідуальний супровід, вартість аудиту враховується в ціну
+                    </p>
+                </div>
+                <div class="shrink-0 flex flex-col items-center md:items-end gap-2 w-full md:w-auto">
+                    <div class="text-2xl font-bold text-deep-slate">2 500 <span class="text-sm font-normal text-slate-500">грн</span></div>
+                    <button onclick="selectTariffAndProceed('Когнітивний Аудит')" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 text-center shadow-md flex items-center justify-center gap-2">
+                        👉 Забронювати сесію в календарі
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 5: Calendar Booking -->
+        <section id="step-5" class="w-full max-w-5xl hidden flex-col items-center animate-fade-in pb-12">
+            <!-- Кнопка повернення до тарифів -->
+            <button type="button" onclick="goToStep(4)" class="self-start mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition duration-150 group cursor-pointer">
+                <span>←</span> <span class="group-hover:underline">Повернутися до тарифів та форматів</span>
+            </button>
+
+            <div class="text-center mb-8">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Оберіть свій час</h2>
+                <p id="calendar-instruction" class="text-slate-600 text-lg">Миттєве бронювання стратегічного розбору</p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8 w-full">
+                <!-- Calendar Grid -->
+                <div class="w-full lg:w-2/3 bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <button onclick="changeWeek(-1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="chevron-left"></i></button>
+                        <h3 id="calendar-month" class="text-xl font-bold text-deep-slate">Листопад 2026</h3>
+                        <button onclick="changeWeek(1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    
+                    <!-- Days Header -->
+                    <div id="calendar-days-header" class="grid grid-cols-5 gap-2 mb-4 text-center text-sm font-semibold text-slate-500">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Slots Grid -->
+                    <div id="calendar-slots" class="grid grid-cols-5 gap-2 min-h-[300px]">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <!-- Loader -->
+                    <div id="calendar-loader" class="hidden flex-col items-center justify-center py-10">
+                        <i data-lucide="loader-2" class="animate-spin text-emerald-green w-8 h-8 mb-2"></i>
+                        <span class="text-sm text-slate-500">Синхронізація розкладу...</span>
+                    </div>
+                </div>
+
+                <!-- Booking Form -->
+                <div class="w-full lg:w-1/3">
+                    <div class="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 sticky top-24">
+                        <div id="booking-container">
+                            <div id="selected-slot-info" class="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
+                                <p class="text-sm text-slate-500 mb-1">Обраний час:</p>
+                                <p id="selected-slot-text" class="font-bold text-lg text-emerald-green"></p>
+                            </div>
+
+                            <form id="booking-form" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1">ПІБ *</label>
+                                    <input type="text" id="b-name" required pattern="[a-zA-Zа-яА-ЯіІїЇєЄґҐ\'\-\s]+" title="Будь ласка, використовуйте тільки літери" oninput="this.value = this.value.replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ\'\-\s]/g, '')" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="Ваше ім'я">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1">Телефон *</label>
+                                    <input type="tel" id="b-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                                    <input type="email" id="b-email" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="name@example.com">
+                                </div>
+                                <button type="submit" id="btn-submit-booking" class="w-full bg-deep-slate text-white font-semibold py-4 rounded-full mt-4 hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2">
+                                    Підтвердити бронювання
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Success Panel -->
+                        <div id="booking-success" class="hidden flex-col items-center text-center py-4">
+                            <div class="w-16 h-16 bg-emerald-100 text-emerald-green rounded-full flex items-center justify-center mb-4">
+                                <i data-lucide="calendar-check-2" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Заброньовано!</h3>
+                            <div class="mb-4 p-3 bg-white rounded-xl border border-emerald-100 shadow-sm w-full">
+                                <p class="text-xs text-slate-500 mb-1">Ваш обраний час:</p>
+                                <p id="success-booked-time" class="font-bold text-emerald-green"></p>
+                            </div>
+                            <p class="text-sm text-slate-500 mb-6">Куди бажаєте перейти далі?</p>
+                            
+                            <div class="space-y-3 w-full">
+                                <button onclick="goToStep(3)" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-3 rounded-full transition-all">
+                                    Мій Нейро-Профіль
+                                </button>
+                                <button onclick="goToStep(4)" class="w-full border border-slate-300 text-slate-700 hover:border-emerald-green hover:text-emerald-green font-semibold py-3 rounded-full transition-all">
+                                    Тарифи
+                                </button>
+                                <button onclick="goToStep(1)" class="w-full text-slate-500 hover:text-slate-800 text-sm font-medium py-2 transition-all">
+                                    На головну
+                                </button>
+                                
+                                <div class="pt-4 mt-4 border-t border-slate-100">
+                                    <button onclick="cancelBooking()" class="w-full text-red-500 hover:text-red-700 text-sm font-medium py-2 transition-all border border-red-100 hover:bg-red-50 rounded-full">
+                                        Скасувати або змінити час
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Popup for system customization -->
+    <div id="system-modal" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-[32px] max-w-md w-full p-8 border border-slate-100 shadow-2xl relative transform scale-95 transition-all duration-300 mx-4">
+            <!-- Close Button -->
+            <button onclick="closeSystemModal()" class="absolute top-6 right-6 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center mb-4 text-amber-600">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-deep-slate">🧠 Функціонал кастомізації систем — у розробці!</h3>
+            </div>
+
+            <!-- Modal Description -->
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed mb-6">
+                <p>
+                    Наша нейромережа зараз навчається автоматично збирати персональний стек інструментів (Notion-шаблони, PDF-трекери та блокери) під індивідуальні дефіцити вашої префронтальної кори.
+                </p>
+                <p class="font-medium text-deep-slate">
+                    Бажаєте отримати вашу систему першими безкоштовно після релізу?
+                </p>
+                <p>
+                    Залиште ваш Telegram або Email, і ми автоматично надішлемо систему, щойно вона пройде бета-тест.
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form id="system-lead-form" class="space-y-4" onsubmit="submitSystemLead(event)">
+                <div>
+                    <input type="text" id="lead-contact" required 
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none transition-all text-sm" 
+                           placeholder="Telegram @username або Email">
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <input type="checkbox" id="lead-gdpr" required class="mt-1 rounded text-teal-600 focus:ring-teal-600/20 h-4 w-4 border-slate-300">
+                    <label for="lead-gdpr" class="text-xs text-slate-500 leading-tight">
+                        Я згоден на обробку персональних даних згідно з <a href="oferta.pdf" target="_blank" class="underline hover:text-teal-600">Політикою Конфіденційності</a>.
+                    </label>
+                </div>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-full transition-all active:scale-95 flex justify-center items-center gap-2 mt-4 text-sm shadow-lg shadow-teal-600/20">
+                    Забронювати мою систему безкоштовно
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Atomic Notification -->
+    <div id="atomic-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-deep-slate text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-[100]">
+        <div class="bg-emerald-green text-white rounded-full p-1"><i data-lucide="check" class="w-4 h-4"></i></div>
+        <p id="atomic-text" class="text-sm font-medium">Вітаю! Твій час — ...</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center text-sm text-slate-400">
+        <div class="flex justify-center gap-8 mb-6">
+            <a href="https://t.me/+OH-Z61radLZiMGRi" target="_blank" class="flex items-center gap-2 hover:text-emerald-green transition-colors group">
+                <div class="p-2 rounded-full bg-slate-100 group-hover:bg-emerald-50 transition-colors">
+                    <i data-lucide="send" class="w-4 h-4 group-hover:text-emerald-green"></i>
+                </div>
+                <span class="font-medium">Telegram Канал</span>
+            </a>
+            <a href="https://www.instagram.com/nadiia.bielaia?igsh=MXJlZm5zdjh2MjJhNw%3D%3D&utm_source=qr" target="_blank" class="flex items-center gap-2 hover:text-emerald-green transition-colors group">
+                <div class="p-2 rounded-full bg-slate-100 group-hover:bg-emerald-50 transition-colors">
+                    <i data-lucide="instagram" class="w-4 h-4 group-hover:text-emerald-green"></i>
+                </div>
+                <span class="font-medium">Instagram</span>
+            </a>
+        </div>
+        <p class="mb-2">
+            <a href="oferta.pdf" target="_blank" class="hover:text-emerald-green underline transition-colors">ДОГОВІР ПУБЛІЧНОЇ ОФЕРТИ</a>
+        </p>
+        <p>&copy; 2026 LevelUp.Strategy. Всі права захищено.</p>
+    </footer>
+
+    <!-- Intl Tel Input JS -->
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
