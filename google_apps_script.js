@@ -34,9 +34,7 @@ function doPost(e) {
       let verified = true;
       if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
         const checkSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, checkSigString, secretKey);
-        const checkSignature = checkSigBytes.map(function(byte) {
-          return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-        }).join('');
+        const checkSignature = bytesToHex(checkSigBytes);
         
         if (checkSignature !== data.merchantSignature) {
           Logger.log("WayForPay Webhook signature mismatch!");
@@ -207,9 +205,7 @@ function doPost(e) {
       let responseSignature = "dummy_signature";
       if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
         const responseSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, responseSigString, secretKey);
-        responseSignature = responseSigBytes.map(function(byte) {
-          return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-        }).join('');
+        responseSignature = bytesToHex(responseSigBytes);
       }
       
       const responsePayload = {
@@ -366,9 +362,7 @@ function doGet(e) {
       let signature = "dummy_signature";
       if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
         const signatureBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, signatureString, secretKey);
-        signature = signatureBytes.map(function(byte) {
-          return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-        }).join('');
+        signature = bytesToHex(signatureBytes);
       }
 
       const result = {
@@ -427,4 +421,21 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify(errorResult))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Допоміжна функція перетворення байт-масиву в Hex-рядок (заміна .map для Java byte[])
+function bytesToHex(bytes) {
+  let hex = "";
+  for (let i = 0; i < bytes.length; i++) {
+    let b = bytes[i];
+    if (b < 0) {
+      b += 256;
+    }
+    let s = b.toString(16);
+    if (s.length === 1) {
+      s = "0" + s;
+    }
+    hex += s;
+  }
+  return hex;
 }
