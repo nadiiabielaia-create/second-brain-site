@@ -101,14 +101,14 @@ function doPost(e) {
                   <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
                 </div>
                 
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
+                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
                 
-                <p>Дякуємо за успішне придбання нашого продукту: <strong>\${productName}</strong>.</p>
+                <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
                 
                 <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="\${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                  <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
                     👉 Отримати доступ в Notion
                   </a>
                 </div>
@@ -132,7 +132,7 @@ function doPost(e) {
                   <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Групова практика та Нейро-Спринт</p>
                 </div>
                 
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
+                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
                 
                 <p>Дякуємо за оплату завдатку для участі у спринті <strong>Нейро-Спринт</strong>.</p>
                 
@@ -141,7 +141,7 @@ function doPost(e) {
                 <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>, який входить у ваш пакет та доступний вам уже зараз:</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="\${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                  <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
                     👉 Отримати доступ до Міні-курсу в Notion
                   </a>
                 </div>
@@ -164,9 +164,9 @@ function doPost(e) {
                   <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Когнітивний Аудит та Нейро-Продуктивність</p>
                 </div>
                 
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
+                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
                 
-                <p>Дякуємо за оплату послуги: <strong>\${productName}</strong>.</p>
+                <p>Дякуємо за оплату послуги: <strong>${productName}</strong>.</p>
                 
                 <p>Оплата пройшла успішно. Якщо ти ще не встиг обрати час для нашої діагностичної сесії у нашому календарі, будь ласка, зроби це за посиланням нижче:</p>
                 

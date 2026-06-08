@@ -1,441 +1,912 @@
-/**
- * LevelUp.Baddy - Google Apps Script Backend (ФІНАЛЬНА ВЕРСІЯ З СИНХРОНІЗАЦІЄЮ)
- */
+// Initialize Lucide icons
+lucide.createIcons();
 
-const YOUR_EMAIL = "nadiia.bielaia@gmail.com"; // ВПИШІТЬ СВІЙ EMAIL ТУТ
-const WORK_START_HOUR = 9;   // 09:00 за Парижем
-const WORK_END_HOUR = 19;   // 19:00 за Парижем
-
-// --- WAYFORPAY & AUTOMATION CONFIGURATION ---
-const WAYFORPAY_SECRET_KEY = "0e6714242aff49e3bacf18fd9c29f3bb76589cfa"; // ВПИШІТЬ СВІЙ СЕКРЕТНИЙ КЛЮЧ ТУТ
-const CRM_WEBHOOK_URL = ""; // (Опціонально) URL вашого CRM веб-хуку
-const NOTION_MINICOURSE_LINK = "https://app.notion.com/p/Mimi-course-372dadbdbc9f80b392afe1346e699d3e?source=copy_link"; // Посилання на Notion мінікурс
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    
-    // 1. Обробити Webhook від WayForPay
-    if (data.transactionStatus && data.merchantAccount === "t_me_d09a8") {
-      const secretKey = WAYFORPAY_SECRET_KEY;
-      
-      // Перевірка підпису від WayForPay
-      const checkSigString = [
-        data.merchantAccount,
-        data.orderReference,
-        data.amount,
-        data.currency,
-        data.authCode,
-        data.cardPan,
-        data.transactionStatus,
-        data.reasonCode
-      ].join(';');
-      
-      let verified = true;
-      if (secretKey && secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
-        const checkSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, checkSigString, secretKey);
-        const checkSignature = bytesToHex(checkSigBytes);
-        
-        if (checkSignature !== data.merchantSignature) {
-          Logger.log("WayForPay Webhook signature mismatch!");
-          verified = false;
-        }
-      }
-      
-      if (verified && data.transactionStatus === "Approved") {
-        const email = data.email || "Не вказано";
-        const phone = data.phone || "Не вказано";
-        const name = (data.clientFirstName || "") + " " + (data.clientLastName || "");
-        const productName = Array.isArray(data.productName) ? data.productName.join(", ") : (data.productName || "Міні-курс Цифровий Inbox (Notion)");
-        const amount = data.amount;
-        const currency = data.currency;
-        
-        // а) Запис у лист "Оплати"
-        let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Оплати") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Оплати");
-        if (paymentSheet.getLastRow() === 0) {
-          paymentSheet.appendRow(["Дата", "Замовлення", "Сума", "Валюта", "Статус", "ПІБ", "Email", "Телефон", "Товари"]);
-        }
-        paymentSheet.appendRow([
-          new Date(),
-          data.orderReference,
-          amount,
-          currency,
-          data.transactionStatus,
-          name.trim() || "Клієнт",
-          email,
-          phone,
-          productName
-        ]);
-        
-        // б) Передача в CRM
-        if (CRM_WEBHOOK_URL) {
-          try {
-            UrlFetchApp.fetch(CRM_WEBHOOK_URL, {
-              method: "POST",
-              contentType: "application/json",
-              payload: JSON.stringify({
-                email: email,
-                productName: productName,
-                name: name,
-                phone: phone,
-                orderReference: data.orderReference,
-                amount: amount,
-                status: data.transactionStatus
-              })
-            });
-          } catch (crmErr) {
-            Logger.log("CRM error: " + crmErr.toString());
-          }
-        }
-        
-        // в) Автовідправка вітального листа з Notion-мінікурсом
-        try {
-          let subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
-          let htmlBody = "";
-          
-          if (productName.indexOf("Цифровий Inbox") !== -1) {
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
-                </div>
-                
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
-                
-                <p>Дякуємо за успішне придбання нашого продукту: <strong>\${productName}</strong>.</p>
-                
-                <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="\${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    👉 Отримати доступ в Notion
-                  </a>
-                </div>
-                
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.
-                </p>
-                <p style="font-size: 13px; color: #64748b; margin-top: 8px;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
-              </div>
-            `;
-          } else if (productName.indexOf("Нейро-Спринт") !== -1) {
-            subject = "Ваше місце заброньовано: Нейро-Спринт!";
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Групова практика та Нейро-Спринт</p>
-                </div>
-                
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
-                
-                <p>Дякуємо за оплату завдатку для участі у спринті <strong>Нейро-Спринт</strong>.</p>
-                
-                <p>Ваше місце в групі успішно заброньовано! Решту суми (<strong>4500 грн</strong>) ви сплатите після офіційного старту групи (коли набереться мінімум 5 учасників).</p>
-                
-                <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>, який входить у ваш пакет та доступний вам уже зараз:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="\${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    👉 Отримати доступ до Міні-курсу в Notion
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px;">Ми зв'яжемося з вами в Telegram або поштою, щойно буде сформовано склад групи для узгодження дати старту першої сесії.</p>
-                
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
-              </div>
-            `;
-          } else {
-            subject = "Оплата підтверджена: Когнітивний Аудит";
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Когнітивний Аудит та Нейро-Продуктивність</p>
-                </div>
-                
-                <p>Вітаємо, <strong>\${data.clientFirstName || 'Друже'}</strong>!</p>
-                
-                <p>Дякуємо за оплату послуги: <strong>\${productName}</strong>.</p>
-                
-                <p>Оплата пройшла успішно. Якщо ти ще не встиг обрати час для нашої діагностичної сесії у нашому календарі, будь ласка, зроби це за посиланням нижче:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://nadiabielaia-create.github.io/second-brain-site/" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    📅 Обрати час у Календарі
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px;">Після бронювання на твою пошту надійде запрошення з Google Meet посиланням для нашої зустрічі.</p>
-                
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
-              </div>
-            `;
-          }
-          
-          MailApp.sendEmail({
-            to: email,
-            subject: subject,
-            htmlBody: htmlBody
-          });
-        } catch (mailErr) {
-          Logger.log("Email error: " + mailErr.toString());
-        }
-      }
-      
-      // Надсилаємо відповідь WayForPay для підтвердження
-      const responseTime = Math.round(new Date().getTime() / 1000);
-      const responseStatus = "accept";
-      const responseSigString = data.orderReference + ";" + responseStatus + ";" + responseTime;
-      
-      let responseSignature = "dummy_signature";
-      if (secretKey && secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
-        const responseSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, responseSigString, secretKey);
-        responseSignature = bytesToHex(responseSigBytes);
-      }
-      
-      const responsePayload = {
-        orderReference: data.orderReference,
-        status: responseStatus,
-        time: responseTime,
-        signature: responseSignature
-      };
-      
-      return ContentService.createTextOutput(JSON.stringify(responsePayload))
-        .setMimeType(ContentService.MimeType.JSON);
+// Init Intl Tel Input
+let iti;
+let payIti;
+document.addEventListener("DOMContentLoaded", () => {
+    const phoneInput = document.querySelector("#b-phone");
+    if(phoneInput && window.intlTelInput) {
+        iti = window.intlTelInput(phoneInput, {
+            initialCountry: "ua",
+            strictMode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+        });
     }
-    
-    // 2. Стандартна логіка для бронювань та лідів з фронтенду
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const action = data.action;
-    const calendar = CalendarApp.getCalendarById(YOUR_EMAIL) || CalendarApp.getDefaultCalendar();
+    const payPhoneInput = document.querySelector("#p-phone");
+    if(payPhoneInput && window.intlTelInput) {
+        payIti = window.intlTelInput(payPhoneInput, {
+            initialCountry: "ua",
+            strictMode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+        });
+    }
+});
 
-    // СКАСУВАННЯ БРОНЮВАННЯ
-    if (action === "cancel") {
-      const now = new Date();
-      const searchStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-      const endSearch = new Date(now.getTime() + (31 * 24 * 60 * 60 * 1000));
-      const events = calendar.getEvents(searchStart, endSearch);
-      
-      let deletedCount = 0;
-      events.forEach(event => {
-        const desc = event.getDescription();
-        if (desc && desc.indexOf(data.phone) !== -1) {
-          event.deleteEvent();
-          deletedCount++;
-        }
-      });
-      
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: "success", 
-        message: "Скасовано подій: " + deletedCount 
-      })).setMimeType(ContentService.MimeType.JSON);
+// --- STATE ---
+let currentStep = 1;
+let currentQuestionIndex = 0;
+
+// Metrics
+let scores = {
+    load: 50,    // Навантаження (вище = краще впорається, хоча зазвичай навантаження це стрес. Будемо вважати, що це "Стійкість до навантаження")
+    focus: 50,   // Фокус
+    system: 50   // Системність
+};
+
+// --- QUIZ DATA ---
+const questions = [
+    {
+        question: "Як ви зазвичай зберігаєте нові ідеї чи важливу інформацію?",
+        options: [
+            { text: "Намагаюсь тримати в голові (і часто забуваю).", load: -10, focus: -10, system: -20 },
+            { text: "Записую в купу різних нотаток чи чатів.", load: -5, focus: 0, system: -10 },
+            { text: "Маю єдину систему входу за вашим методом.", load: 10, focus: 10, system: 20 }
+        ]
+    },
+    {
+        question: "Скільки часу ви можете працювати над однією задачею без відволікання?",
+        options: [
+            { text: "Менше 10 хвилин — постійно тягнусь до телефону.", load: -10, focus: -20, system: -5 },
+            { text: "Близько 30 хвилин, але з великим зусиллям.", load: -5, focus: 0, system: 0 },
+            { text: "Маю чіткі блоки глибокої роботи без сповіщень.", load: 10, focus: 20, system: 10 }
+        ]
+    },
+    {
+        question: "Як ви почуваєтесь в кінці типового робочого дня?",
+        options: [
+            { text: "Виснажений хаосом, ніби нічого не встиг.", load: -20, focus: -10, system: -10 },
+            { text: "Втомлений, але результати є.", load: 0, focus: 5, system: 5 },
+            { text: "Спокійний, бо все йде за моїм планом.", load: 20, focus: 10, system: 20 }
+        ]
+    },
+    {
+        question: "Чи знаєте ви свої найпродуктивніші години доби?",
+        options: [
+            { text: "Ні, працюю коли доводиться.", load: -10, focus: -10, system: -10 },
+            { text: "Приблизно розумію, але не завжди підлаштовуюсь.", load: 0, focus: 0, system: 5 },
+            { text: "Так, і планую найважче саме на цей час.", load: 10, focus: 20, system: 15 }
+        ]
+    }
+];
+
+// --- NAVIGATION LOGIC ---
+function goToStep(step) {
+    // Hide all steps
+    [1, 2, 3, 4, 5].forEach(s => {
+        const el = document.getElementById(`step-${s}`);
+        if (el) el.classList.add('hidden');
+        if (el) el.classList.remove('flex');
+    });
+
+    // Show target step
+    const targetEl = document.getElementById(`step-${step}`);
+    if (targetEl) {
+        targetEl.classList.remove('hidden');
+        targetEl.classList.add('flex');
     }
 
-    // ЗАПИС ЛІДА З МОДАЛЬНОГО ВІКНА
-    if (action === "lead") {
-      let leadSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Ліди") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Ліди");
-      if (leadSheet.getLastRow() === 0) {
-        leadSheet.appendRow(["Дата", "Контакт", "Профіль", "Теги"]);
-      }
-      leadSheet.appendRow([
-        new Date(),
-        data.contact,
-        data.profile,
-        data.tags.join(", ")
-      ]);
-      return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
-        .setMimeType(ContentService.MimeType.JSON);
+    currentStep = step;
+    updateHeaderProgress(step);
+
+    // Specific logic per step
+    if (step === 2) {
+        currentQuestionIndex = 0;
+        scores = { load: 50, focus: 50, system: 50 }; // reset
+        renderQuestion();
+    } else if (step === 3) {
+        renderResults();
+    } else if (step === 5) {
+        initCalendar();
     }
-
-    // СТВОРЕННЯ БРОНЮВАННЯ
-    const name = data.name;
-    const phone = data.phone;
-    const email = data.email || "Не вказано";
-    const slot = new Date(data.slot);
-
-    // Валідація: Робочі години (09:00 - 19:00) та вихідні дні за таймзоною Europe/Paris
-    const parisTimeString = slot.toLocaleString("en-US", {timeZone: "Europe/Paris"});
-    const parisDate = new Date(parisTimeString);
-    const dayOfWeek = parisDate.getDay(); // 0 = Неділя, 6 = Субота
-    const hours = parisDate.getHours();
-
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: "error", 
-        message: "Бронювання на вихідні дні неможливе." 
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    if (hours < WORK_START_HOUR || hours >= WORK_END_HOUR) {
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: "error", 
-        message: "Бронювання можливе тільки в робочий час з 09:00 до 19:00 за Парижем." 
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    const scores = data.quizScores;
-    
-    // Запис у Google Таблицю
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Дата створення", "ПІБ", "Телефон", "Email", "Обраний Час", "Тариф/Послуга", "Стійкість", "Фокус", "Системність"]);
-    }
-    
-    const tariff = data.tariff || "Не вказано";
-    sheet.appendRow([
-      new Date(), name, phone, email, slot, tariff, scores.load, scores.focus, scores.system
-    ]);
-    
-    // Створення події
-    const endTime = new Date(slot);
-    endTime.setMinutes(endTime.getMinutes() + 30);
-    
-    const description = `Стратегічний розбір: ${name}
-Телефон: ${phone}
-Email: ${email}
-
-📊 Нейро-профіль:
-- Стійкість: ${scores.load}/100
-- Фокус: ${scores.focus}/100
-- Системність: ${scores.system}/100`;
-    
-    const event = calendar.createEvent(
-      `Стратегічний розбір - ${name}`,
-      slot,
-      endTime,
-      { description: description }
-    );
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", eventId: event.getId() }))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
 }
 
-function doGet(e) {
-  try {
-    const action = e.parameter.action;
-    
-    // Генерація підпису для WayForPay
-    if (action === "getSignature") {
-      const merchantAccount = "t_me_d09a8";
-      const merchantDomainName = "nadiabielaia-create.github.io";
-      const secretKey = WAYFORPAY_SECRET_KEY;
-      
-      const orderReference = e.parameter.orderReference;
-      const orderDate = e.parameter.orderDate;
-      const amount = e.parameter.amount;
-      const currency = e.parameter.currency;
-      const productName = e.parameter.productName;
-      const productCount = e.parameter.productCount || "1";
-      const productPrice = e.parameter.productPrice || amount;
-
-      const signatureString = [
-        merchantAccount,
-        merchantDomainName,
-        orderReference,
-        orderDate,
-        amount,
-        currency,
-        productName,
-        productCount,
-        productPrice
-      ].join(';');
-
-      let signature = "dummy_signature";
-      if (secretKey && secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
-        const signatureBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, signatureString, secretKey);
-        signature = bytesToHex(signatureBytes);
-      }
-
-      const result = {
-        status: "success",
-        signature: signature
-      };
-
-      const callback = e.parameter.callback;
-      if (callback) {
-        return ContentService.createTextOutput(callback + '(' + JSON.stringify(result) + ')')
-          .setMimeType(ContentService.MimeType.JAVASCRIPT);
-      }
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // Стандартний календар
-    const calendar = CalendarApp.getCalendarById(YOUR_EMAIL) || CalendarApp.getDefaultCalendar();
-    
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
-    
-    const events = calendar.getEvents(start, end);
-    
-    // Отримуємо таймстемпи (мілісекунди) зайнятих слотів
-    const busySlots = events.map(ev => ({
-      start: ev.getStartTime().getTime(),
-      end: ev.getEndTime().getTime()
-    }));
-    
-    const result = { 
-      status: "success", 
-      busySlots: busySlots,
-      calendarName: calendar.getName(),
-      calendarId: calendar.getId()
+function updateHeaderProgress(step) {
+    const indicator = document.getElementById('progress-indicator');
+    const steps = {
+        1: "Крок 1: Вступ",
+        2: "Крок 2: Аудит",
+        3: "Крок 3: Ваш Профіль",
+        4: "Крок 4: Формати",
+        5: "Крок 5: Бронювання"
     };
-    
-    // JSONP для обходу CORS
-    const callback = e.parameter.callback;
-    if (callback) {
-      return ContentService.createTextOutput(callback + '(' + JSON.stringify(result) + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    const errorResult = { status: "error", message: error.toString() };
-    const callback = e.parameter && e.parameter.callback;
-    if (callback) {
-      return ContentService.createTextOutput(callback + '(' + JSON.stringify(errorResult) + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    return ContentService.createTextOutput(JSON.stringify(errorResult))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
+    indicator.textContent = steps[step];
 }
 
-// Допоміжна функція перетворення байт-масиву в Hex-рядок (заміна .map для Java byte[])
-function bytesToHex(bytes) {
-  let hex = "";
-  for (let i = 0; i < bytes.length; i++) {
-    let b = bytes[i];
-    if (b < 0) {
-      b += 256;
+// --- QUIZ LOGIC ---
+function renderQuestion() {
+    const container = document.getElementById('quiz-container');
+    const q = questions[currentQuestionIndex];
+    
+    // Update progress bar
+    const progress = ((currentQuestionIndex) / questions.length) * 100;
+    document.getElementById('quiz-progress').style.width = `${progress}%`;
+
+    let html = `
+        <div class="fade-in w-full">
+            <p class="text-sm font-semibold text-emerald-green mb-4">Питання ${currentQuestionIndex + 1} з ${questions.length}</p>
+            <h3 class="text-2xl font-bold mb-8 text-deep-slate">${q.question}</h3>
+            <div class="space-y-4">
+    `;
+
+    q.options.forEach((opt, idx) => {
+        html += `
+            <button onclick="handleAnswer(${idx})" class="w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-green hover:bg-emerald-50 transition-all font-medium text-slate-700">
+                ${opt.text}
+            </button>
+        `;
+    });
+
+    html += `</div></div>`;
+    container.innerHTML = html;
+}
+
+function handleAnswer(optionIndex) {
+    const q = questions[currentQuestionIndex];
+    const opt = q.options[optionIndex];
+    
+    // Update scores
+    scores.load += opt.load;
+    scores.focus += opt.focus;
+    scores.system += opt.system;
+
+    // Constrain scores
+    scores.load = Math.max(10, Math.min(100, scores.load));
+    scores.focus = Math.max(10, Math.min(100, scores.focus));
+    scores.system = Math.max(10, Math.min(100, scores.system));
+
+    if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+    } else {
+        // Finish quiz
+        document.getElementById('quiz-progress').style.width = `100%`;
+        setTimeout(() => goToStep(3), 500);
     }
-    let s = b.toString(16);
-    if (s.length === 1) {
-      s = "0" + s;
+}
+
+// --- RESULTS LOGIC ---
+let radarChartInstance = null;
+
+function renderResults() {
+    // Determine profile type
+    const titleEl = document.getElementById('result-title');
+    const descEl = document.getElementById('result-description');
+    const badgeEl = document.getElementById('result-status-badge');
+
+    const total = scores.load + scores.focus + scores.system;
+    
+    if (total > 200) {
+        badgeEl.textContent = "Системний потенціал";
+        badgeEl.className = "inline-block px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-sm mb-4 self-start";
+        titleEl.textContent = "Ваша система майже готова до масштабування";
+        descEl.textContent = "Ви вже маєте базову дисципліну та непоганий фокус. Тепер нам потрібно налаштувати її так, щоб вона працювала на автоматизмі за принципами 'Атомних звичок' та другого мозку.";
+    } else if (total < 120) {
+        badgeEl.textContent = "Когнітивне перевантаження";
+        badgeEl.className = "inline-block px-4 py-2 rounded-full bg-red-100 text-red-800 font-semibold text-sm mb-4 self-start";
+        titleEl.textContent = "Час зупинити хаос";
+        descEl.textContent = "Ваш мозок витрачає надто багато енергії на утримання інформації та боротьбу з відволіканнями. Необхідно терміново розвантажити пам'ять та впровадити 'Зовнішній мозок'.";
+    } else {
+        badgeEl.textContent = "Дефіцит фокусу";
+        badgeEl.className = "inline-block px-4 py-2 rounded-full bg-amber-100 text-amber-800 font-semibold text-sm mb-4 self-start";
+        titleEl.textContent = "Потенціал втрачається в рутині";
+        descEl.textContent = "Ви намагаєтесь все встигнути, але часто працюєте в режимі реакції. Нам потрібно вибудувати блоки глибокої роботи та синхронізувати графік з вашими циркадними ритмами.";
     }
-    hex += s;
-  }
-  return hex;
+
+    // Render Radar Chart
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+    
+    if (radarChartInstance) {
+        radarChartInstance.destroy();
+    }
+
+    radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Стійкість', 'Фокус', 'Системність'],
+            datasets: [{
+                label: 'Ваш поточний рівень',
+                data: [scores.load, scores.focus, scores.system],
+                backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald green with opacity
+                borderColor: '#10b981',
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#10b981',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    pointLabels: {
+                        font: { family: 'Inter', size: 14, weight: '600' },
+                        color: '#1e293b'
+                    },
+                    ticks: {
+                        display: false,
+                        min: 0,
+                        max: 100
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+// --- CALENDAR & BOOKING LOGIC ---
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1I6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec"; 
+let currentWeekOffset = 0;
+let selectedSlot = null; // { timeStart, timeEnd, date }
+let busySlots = []; // from backend
+
+function showSuccessPanel(bookingData) {
+    document.getElementById('booking-container').classList.add('hidden');
+    document.getElementById('booking-success').classList.remove('hidden');
+    document.getElementById('booking-success').classList.add('flex');
+    
+    if(bookingData && bookingData.slot) {
+        const d = new Date(bookingData.slot);
+        const options = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+        document.getElementById('success-booked-time').textContent = d.toLocaleDateString('uk-UA', options);
+    }
+}
+
+function initCalendar() {
+    currentWeekOffset = 0;
+    
+    // Перевірка чи вже є бронювання
+    const existing = localStorage.getItem('levelup_booking');
+    if (existing) {
+        showSuccessPanel(JSON.parse(existing));
+    } else {
+        document.getElementById('booking-container').classList.remove('hidden');
+        document.getElementById('booking-success').classList.add('hidden');
+        document.getElementById('booking-success').classList.remove('flex');
+    }
+
+    // Оновлення заголовку відповідно до вибраного тарифу
+    const chosenTariff = sessionStorage.getItem('user_intent_tariff');
+    const calendarHeader = document.querySelector('#step-5 h2');
+    if (calendarHeader) {
+        if (chosenTariff) {
+            calendarHeader.innerText = `Бронювання розбору під формат: ${chosenTariff}`;
+        } else {
+            calendarHeader.innerText = "Оберіть свій час";
+        }
+    }
+
+    const calInst = document.getElementById('calendar-instruction');
+    if (calInst) {
+        if (chosenTariff === 'Аудит' || chosenTariff === 'Когнітивний Аудит' || chosenTariff === 'Архітектор Систем') {
+            calInst.innerText = "Оберіть зручний час для нашої діагностичної сесії:";
+        } else {
+            calInst.innerText = "Миттєве бронювання стратегічного розбору";
+        }
+    }
+
+    loadWeek();
+}
+
+function cancelBooking() {
+    if(confirm("Ви впевнені, що хочете скасувати поточне бронювання?")) {
+        // Локальне видалення
+        localStorage.removeItem('levelup_booking');
+        
+        // Повернення форми
+        document.getElementById('booking-container').classList.remove('hidden');
+        document.getElementById('booking-success').classList.add('hidden');
+        document.getElementById('booking-success').classList.remove('flex');
+        
+        selectedSlot = null;
+        renderCalendarUI();
+        
+        showAtomicNotification("Бронювання скасовано. Виберіть новий час.");
+        
+        // Опціонально: тут можна відправити fetch-запит на бекенд для скасування
+        // fetch(WEBHOOK_URL + "?action=cancel", { ... })
+    }
+}
+
+function changeWeek(offset) {
+    currentWeekOffset += offset;
+    loadWeek();
+}
+
+async function loadWeek() {
+    renderCalendarUI();
+    
+    // Візуальний індикатор завантаження
+    document.getElementById('calendar-loader').style.display = 'flex';
+    
+    try {
+        // Запит до Google Apps Script для отримання реальних подій
+        if (WEBHOOK_URL.startsWith("http")) {
+            // Використовуємо JSONP для обходу будь-яких блокувань CORS
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const callbackName = 'jsonpCallback_' + Math.round(100000 * Math.random());
+                
+                // Тайм-аут на випадок, якщо Google поверне сторінку авторизації (HTML), яку браузер не зможе виконати як скрипт
+                const timeoutId = setTimeout(() => {
+                    cleanup();
+                    showAtomicNotification("Тайм-аут синхронізації. Перевірте доступ 'Усі' в Apps Script.", false);
+                    resolve(); // Продовжуємо з порожнім масивом, щоб не блокувати інтерфейс
+                }, 5000);
+
+                window[callbackName] = function(data) {
+                    clearTimeout(timeoutId);
+                    if (data.status === "success") {
+                        busySlots = data.busySlots || [];
+                    } else {
+                        showAtomicNotification("Помилка від календаря: " + data.message, false);
+                    }
+                    cleanup();
+                    resolve();
+                };
+                
+                const cleanup = () => {
+                    delete window[callbackName];
+                    if (document.body.contains(script)) {
+                        document.body.removeChild(script);
+                    }
+                };
+                
+                script.src = `${WEBHOOK_URL}?action=getSlots&callback=${callbackName}&t=${new Date().getTime()}`;
+                
+                script.onerror = function() {
+                    clearTimeout(timeoutId);
+                    cleanup();
+                    resolve(); // Продовжуємо з порожнім масивом
+                };
+                
+                document.body.appendChild(script);
+            });
+        } else {
+            await new Promise(r => setTimeout(r, 600));
+            busySlots = [];
+        }
+    } catch (e) {
+        console.error("Мережева помилка завантаження слотів:", e);
+        showAtomicNotification("Не вдалося завантажити розклад з календаря. " + e.message, false);
+    }
+
+    document.getElementById('calendar-loader').style.display = 'none';
+    renderCalendarUI(); // Перемальовуємо вже з урахуванням зайнятих слотів
+}
+
+
+function getWeekDates() {
+    const today = new Date();
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // 0 = Mon
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dayOfWeek + (currentWeekOffset * 7));
+    
+    const dates = [];
+    for(let i=0; i<5; i++) { // Mon - Fri (5 days)
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(d);
+    }
+    return dates;
+}
+
+function renderCalendarUI() {
+    const dates = getWeekDates();
+    const monthNames = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
+    document.getElementById('calendar-month').textContent = `${monthNames[dates[0].getMonth()]} ${dates[0].getFullYear()}`;
+
+    const headersContainer = document.getElementById('calendar-days-header');
+    const slotsContainer = document.getElementById('calendar-slots');
+    
+    headersContainer.innerHTML = '';
+    slotsContainer.innerHTML = '';
+
+    const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт"];
+    
+    dates.forEach((date, i) => {
+        // Headers
+        const isToday = new Date().toDateString() === date.toDateString();
+        headersContainer.innerHTML += `
+            <div class="flex flex-col p-2 ${isToday ? 'text-emerald-green bg-emerald-50 rounded-lg' : ''}">
+                <span class="text-xs uppercase">${dayNames[i]}</span>
+                <span class="text-lg">${date.getDate()}</span>
+            </div>
+        `;
+
+        // Slots Column
+        const col = document.createElement('div');
+        col.className = "flex flex-col gap-2";
+
+        const now = new Date();
+
+        for (let h = 0; h < 24; h++) {
+            ['00', '30'].forEach(min => {
+                const slotTime = new Date(date);
+                slotTime.setHours(h, parseInt(min), 0, 0);
+
+                if (slotTime > now) {
+                    // Валідація за таймзоною Europe/Paris
+                    const parisTimeString = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris"});
+                    const parisDate = new Date(parisTimeString);
+                    
+                    const dayOfWeek = parisDate.getDay(); // 0 = Неділя, 6 = Субота
+                    const hours = parisDate.getHours();
+
+                    // ФІЛЬТР: Якщо це Субота (6) або Неділя (0) за Парижем — пропускаємо слот
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        return;
+                    }
+
+                    // ФІЛЬТР: Робочі години з 9 до 19 за Парижем
+                    if (hours < 9 || hours >= 19) {
+                        return;
+                    }
+
+                    // Форматуємо відображення у локальному часі користувача
+                    const localHour = slotTime.getHours();
+                    const localMin = slotTime.getMinutes() === 0 ? '00' : '30';
+                    const timeStr = `${localHour}:${localMin}`;
+                    
+                    // Перевірка чи слот вже зайнятий у Google Календарі
+                    const isBusy = busySlots.some(busy => {
+                        const slotMs = slotTime.getTime();
+                        return (slotMs >= busy.start - 60000) && (slotMs < busy.end - 60000);
+                    });
+
+                    // Якщо слот зайнятий — відображаємо його у стані disabled
+                    if (isBusy) {
+                        const disabledBtn = document.createElement('button');
+                        disabledBtn.type = 'button';
+                        disabledBtn.className = "w-full py-2 text-sm rounded-lg border border-slate-100 bg-slate-100 text-slate-400 cursor-not-allowed flex items-center justify-center gap-1 font-medium transition-all";
+                        disabledBtn.disabled = true;
+                        disabledBtn.innerHTML = `<i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i> ${timeStr}`;
+                        col.appendChild(disabledBtn);
+                        return;
+                    }
+
+                    const btn = document.createElement('button');
+                    
+                    // Check if selected
+                    const isSelected = selectedSlot && selectedSlot.date.getTime() === slotTime.getTime();
+                    
+                    if (isSelected) {
+                        btn.className = "w-full py-2 text-sm rounded-lg font-medium transition-all bg-emerald-green text-white shadow-md scale-105";
+                        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 inline"></i> ${timeStr}`;
+                    } else {
+                        btn.className = "w-full py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:border-emerald-green hover:text-emerald-green transition-all bg-white font-medium";
+                        btn.textContent = timeStr;
+                    }
+
+                    btn.onclick = () => selectSlot(slotTime);
+                    col.appendChild(btn);
+                }
+            });
+        }
+        slotsContainer.appendChild(col);
+    });
+    
+    // Діагностична інформація
+    let debugEl = document.getElementById('debug-info');
+    if (!debugEl) {
+        debugEl = document.createElement('div');
+        debugEl.id = 'debug-info';
+        debugEl.className = 'col-span-full text-xs text-slate-400 mt-4 text-center';
+        slotsContainer.appendChild(debugEl);
+    }
+    debugEl.textContent = `Синхронізовано. Зайнятих подій знайдено у вашому календарі: ${busySlots.length}`;
+
+    lucide.createIcons();
+}
+
+function selectSlot(dateObj) {
+    // Un-click logic
+    if (selectedSlot && selectedSlot.date.getTime() === dateObj.getTime()) {
+        selectedSlot = null;
+        document.getElementById('booking-form').classList.add('opacity-50', 'pointer-events-none');
+        document.getElementById('selected-slot-info').classList.add('hidden');
+    } else {
+        selectedSlot = { date: dateObj };
+        document.getElementById('booking-form').classList.remove('opacity-50', 'pointer-events-none');
+        document.getElementById('selected-slot-info').classList.remove('hidden');
+        
+        const options = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+        document.getElementById('selected-slot-text').textContent = dateObj.toLocaleDateString('uk-UA', options);
+    }
+    renderCalendarUI();
+}
+
+document.getElementById('booking-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedSlot) return;
+
+    // LocalStorage Check
+    if (localStorage.getItem('levelup_booking')) {
+        showAtomicNotification("У вас вже є заброньована сесія.", false);
+        return;
+    }
+
+    const name = document.getElementById('b-name').value.trim();
+    
+    // Валідація імені
+    if (!name || name.length < 2) {
+        showAtomicNotification("Будь ласка, введіть коректне ім'я.", false);
+        return;
+    }
+
+    // Строга валідація телефону за маскою країни
+    if (iti && !iti.isValidNumber()) {
+        showAtomicNotification("Будь ласка, введіть повністю коректний номер телефону.", false);
+        return;
+    }
+
+    const phone = iti ? iti.getNumber() : document.getElementById('b-phone').value;
+    const email = document.getElementById('b-email').value.trim();
+    const tariff = sessionStorage.getItem('user_intent_tariff') || "Аудит";
+
+    const payload = {
+        name, phone, email, tariff,
+        slot: selectedSlot.date.toISOString(),
+        quizScores: scores
+    };
+
+    // Optimistic UI confirmation
+    localStorage.setItem('levelup_booking', JSON.stringify(payload));
+    showAtomicNotification(`Вітаю, ${name}! Твій час — ${selectedSlot.date.getHours()}:${selectedSlot.date.getMinutes() === 0 ? '00' : '30'}. Твій нейро-профіль уже чекає на розбір.`);
+    
+    document.getElementById('booking-form').reset();
+    selectedSlot = null;
+    renderCalendarUI();
+    
+    showSuccessPanel(payload);
+
+    // Async push to backend
+    if (WEBHOOK_URL.startsWith("http")) {
+        try {
+            fetch(WEBHOOK_URL, {
+                method: "POST",
+                mode: 'no-cors', // Because GAS might have cors issues from localhost
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            console.error("Sync error", err);
+        }
+    }
+});
+
+function showAtomicNotification(text, success = true) {
+    const notif = document.getElementById('atomic-notification');
+    document.getElementById('atomic-text').textContent = text;
+    
+    notif.classList.remove('opacity-0', 'translate-y-24');
+    notif.classList.add('opacity-100', 'translate-y-0');
+    
+    setTimeout(() => {
+        notif.classList.add('opacity-0', 'translate-y-24');
+        notif.classList.remove('opacity-100', 'translate-y-0');
+    }, 5000);
+}
+
+/**
+ * Функція обробки вибору тарифу
+ * @param {string} tariffName - Назва обраного тарифного плану
+ */
+function selectTariffAndProceed(tariffName) {
+    // 1. Маркетинговий трекінг: фіксуємо, який саме тариф зацікавив користувача
+    sessionStorage.setItem('user_intent_tariff', tariffName);
+    
+    // 2. Якщо підключено Google Analytics / Facebook Pixel — відправляємо подію
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'select_content', {
+            content_type: 'tariff',
+            item_id: tariffName
+        });
+    }
+
+    // 3. Динамічно змінюємо заголовок та підзаголовок на кроці 5
+    const calendarHeader = document.querySelector('#step-5 h2');
+    if (calendarHeader) {
+        calendarHeader.innerText = `Бронювання розбору під формат: ${tariffName}`;
+    }
+
+    const calInst = document.getElementById('calendar-instruction');
+    if (calInst) {
+        if (tariffName === 'Аудит' || tariffName === 'Когнітивний Аудит' || tariffName === 'Архітектор Систем') {
+            calInst.innerText = "Оберіть зручний час для нашої діагностичної сесії:";
+        } else {
+            calInst.innerText = "Миттєве бронювання стратегічного розбору";
+        }
+    }
+
+    // 4. М'яко переводимо користувача на крок вибору часу (Step 5)
+    goToStep(5);
+}
+
+/**
+ * Перегляд форматів участі з відправкою GA події
+ */
+function clickViewFormats() {
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'click_view_formats');
+    }
+    goToStep(4);
+}
+
+/**
+ * Відкрити модальне вікно замовлення кастомізації
+ */
+function openSystemModal() {
+    const modal = document.getElementById('system-modal');
+    if (modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+    }
+}
+
+/**
+ * Закрити модальне вікно замовлення кастомізації
+ */
+function closeSystemModal() {
+    const modal = document.getElementById('system-modal');
+    if (modal) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+    }
+}
+
+/**
+ * Відправка даних ліда з модального вікна
+ */
+async function submitSystemLead(event) {
+    event.preventDefault();
+    
+    const contact = document.getElementById('lead-contact').value.trim();
+    if (!contact) return;
+
+    // Розрахунок профілю на основі балів
+    const total = scores.load + scores.focus + scores.system;
+    let profileName = "Дефіцит фокусу";
+    let profileTag = "Профіль_Дистракція";
+    
+    if (total > 200) {
+        profileName = "Системний потенціал";
+        profileTag = "Профіль_Потенціал";
+    } else if (total < 120) {
+        profileName = "Когнітивне перевантаження";
+        profileTag = "Профіль_Перевантаження";
+    }
+
+    const payload = {
+        action: "lead",
+        contact: contact,
+        profile: profileName,
+        tags: ["Замовлення_Системи_В_Розробці", profileTag]
+    };
+
+    // Закриваємо модалку та показуємо оптимістичне підтвердження
+    closeSystemModal();
+    document.getElementById('system-lead-form').reset();
+    showAtomicNotification("Дякуємо! Вашу систему безкоштовно заброньовано. Ми надішлемо її після релізу.");
+
+    // Відправляємо асинхронно на бекенд Google Apps Script
+    if (WEBHOOK_URL.startsWith("http")) {
+        try {
+            fetch(WEBHOOK_URL, {
+                method: "POST",
+                mode: 'no-cors',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            console.error("Помилка відправки ліда:", err);
+        }
+    }
+}
+
+// --- WAYFORPAY PAYMENT INTEGRATION ---
+let currentPaymentTariff = "";
+let currentPaymentAmount = 0;
+let currentPaymentProductName = "";
+
+function openPaymentModal(tariffName, amount, productName) {
+    currentPaymentTariff = tariffName;
+    currentPaymentAmount = amount;
+    currentPaymentProductName = productName;
+
+    document.getElementById('payment-product-title').textContent = productName;
+    document.getElementById('payment-product-price').textContent = `${amount} UAH`;
+
+    const modal = document.getElementById('payment-modal');
+    if (modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+    }
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (modal) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+    }
+}
+
+function getPaymentSignature(orderReference, orderDate, amount, currency, productName) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'jsonpPaymentSig_' + Math.round(100000 * Math.random());
+        const script = document.createElement('script');
+        
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error("Тайм-аут отримання підпису від сервера."));
+        }, 8000);
+
+        window[callbackName] = function(data) {
+            clearTimeout(timeoutId);
+            cleanup();
+            if (data.status === "success") {
+                resolve(data.signature);
+            } else {
+                reject(new Error("Не вдалося отримати підпис: " + (data.message || "невідома помилка")));
+            }
+        };
+
+        const cleanup = () => {
+            delete window[callbackName];
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
+        };
+
+        script.src = `${WEBHOOK_URL}?action=getSignature&orderReference=${orderReference}&orderDate=${orderDate}&amount=${amount}&currency=${currency}&productName=${encodeURIComponent(productName)}&callback=${callbackName}&t=${new Date().getTime()}`;
+        script.onerror = function() {
+            clearTimeout(timeoutId);
+            cleanup();
+            reject(new Error("Помилка мережі при отриманні підпису."));
+        };
+        document.body.appendChild(script);
+    });
+}
+
+async function submitPayment(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('p-name').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+    
+    if (!name || name.length < 2) {
+        showAtomicNotification("Будь ласка, введіть коректне ім'я.", false);
+        return;
+    }
+
+    if (payIti && !payIti.isValidNumber()) {
+        showAtomicNotification("Будь ласка, введіть повністю коректний номер телефону.", false);
+        return;
+    }
+
+    const phone = payIti ? payIti.getNumber() : document.getElementById('p-phone').value;
+    
+    const gdprChecked = document.getElementById('p-gdpr').checked;
+    if (!gdprChecked) {
+        showAtomicNotification("Необхідно погодитися з умовами публічної оферти.", false);
+        return;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-payment');
+    const originalBtnText = btnSubmit.innerHTML;
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-2"></i> Обробка...`;
+    lucide.createIcons();
+
+    try {
+        const orderDate = Math.round(new Date().getTime() / 1000);
+        const orderReference = `WFP_INBOX_${orderDate}_${Math.floor(1000 + Math.random() * 9000)}`;
+        
+        // Fetch signature from Google Apps Script
+        const signature = await getPaymentSignature(
+            orderReference,
+            orderDate,
+            currentPaymentAmount,
+            "UAH",
+            currentPaymentProductName
+        );
+
+        // Close the local payment modal
+        closePaymentModal();
+
+        // Save client intent tariff in sessionStorage
+        sessionStorage.setItem('user_intent_tariff', currentPaymentTariff);
+
+        // Initialize WayForPay widget
+        const wayforpay = new Wayforpay();
+        wayforpay.run({
+            merchantAccount: "t_me_d09a8",
+            merchantDomainName: "nadiabielaia-create.github.io",
+            authorizationType: "SimpleSignature",
+            merchantSignature: signature,
+            orderReference: orderReference,
+            orderDate: orderDate,
+            amount: currentPaymentAmount,
+            currency: "UAH",
+            productName: [currentPaymentProductName],
+            productPrice: [currentPaymentAmount],
+            productCount: [1],
+            clientFirstName: name.split(' ')[0] || name,
+            clientLastName: name.split(' ').slice(1).join(' ') || "Клієнт",
+            clientEmail: email,
+            clientPhone: phone
+        },
+        function (response) {
+            // SUCCESS CALLBACK
+            if (currentPaymentTariff === "Цифровий Inbox" || currentPaymentTariff === "Нейро-Спринт") {
+                window.location.href = "https://nadiabielaia-create.github.io/second-brain-site/success.html";
+            } else {
+                // Cognitive Audit
+                sessionStorage.setItem('levelup_paid_audit', 'true');
+                
+                // Pre-fill fields on step 5 (calendar booking)
+                setTimeout(() => {
+                    const bNameInput = document.getElementById('b-name');
+                    const bEmailInput = document.getElementById('b-email');
+                    
+                    if (bNameInput) bNameInput.value = name;
+                    if (bEmailInput) bEmailInput.value = email;
+                    if (iti && payIti) {
+                        iti.setNumber(payIti.getNumber());
+                    } else {
+                        const bPhoneInput = document.getElementById('b-phone');
+                        if (bPhoneInput) bPhoneInput.value = phone;
+                    }
+                    
+                    const bForm = document.getElementById('booking-form');
+                    if (bForm) {
+                        bForm.classList.remove('opacity-50', 'pointer-events-none');
+                    }
+                }, 100);
+
+                goToStep(5);
+                showAtomicNotification("Оплата успішна! Будь ласка, оберіть час для вашої сесії в календарі.");
+            }
+        },
+        function (response) {
+            showAtomicNotification("Платіж відхилено. Спробуйте іншу картку або зверніться до банку.", false);
+        },
+        function (response) {
+            showAtomicNotification("Оплата в обробці. Зачекайте завершення транзакції.");
+        });
+
+    } catch (err) {
+        console.error(err);
+        showAtomicNotification(err.message || "Помилка при ініціалізації платежу.", false);
+        
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnText;
+        lucide.createIcons();
+    }
 }
