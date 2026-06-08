@@ -17,7 +17,7 @@ function doPost(e) {
     
     // 1. Обробити Webhook від WayForPay
     if (data.transactionStatus && data.merchantAccount === "t_me_d09a8") {
-      const secretKey = WAYFORPAY_SECRET_KEY || "YOUR_WAYFORPAY_SECRET_KEY";
+      const secretKey = WAYFORPAY_SECRET_KEY || "0e6714242aff49e3bacf18fd9c29f3bb76589cfa";
       
       // Перевірка підпису від WayForPay
       const checkSigString = [
@@ -32,7 +32,7 @@ function doPost(e) {
       ].join(';');
       
       let verified = true;
-      if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
+      if (secretKey !== "0e6714242aff49e3bacf18fd9c29f3bb76589cfa") {
         const checkSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, checkSigString, secretKey);
         const checkSignature = bytesToHex(checkSigBytes);
         
@@ -203,7 +203,7 @@ function doPost(e) {
       const responseSigString = data.orderReference + ";" + responseStatus + ";" + responseTime;
       
       let responseSignature = "dummy_signature";
-      if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
+      if (secretKey !== "0e6714242aff49e3bacf18fd9c29f3bb76589cfa") {
         const responseSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, responseSigString, secretKey);
         responseSignature = bytesToHex(responseSigBytes);
       }
@@ -360,7 +360,7 @@ function doGet(e) {
       ].join(';');
 
       let signature = "dummy_signature";
-      if (secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
+      if (secretKey !== "0e6714242aff49e3bacf18fd9c29f3bb76589cfa") {
         const signatureBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, signatureString, secretKey);
         signature = bytesToHex(signatureBytes);
       }
