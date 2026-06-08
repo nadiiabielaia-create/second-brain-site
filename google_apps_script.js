@@ -7,7 +7,7 @@ const WORK_START_HOUR = 9;   // 09:00 за Парижем
 const WORK_END_HOUR = 19;   // 19:00 за Парижем
 
 // --- WAYFORPAY & AUTOMATION CONFIGURATION ---
-const WAYFORPAY_SECRET_KEY = "YOUR_WAYFORPAY_SECRET_KEY"; // ВПИШІТЬ СВІЙ СЕКРЕТНИЙ КЛЮЧ ТУТ
+const WAYFORPAY_SECRET_KEY = "0e6714242aff49e3bacf18fd9c29f3bb76589cfa"; // YOUR_WAYFORPAY_SECRET_KEY
 const CRM_WEBHOOK_URL = ""; // (Опціонально) URL вашого CRM веб-хуку
 const NOTION_MINICOURSE_LINK = "https://app.notion.com/p/Mimi-course-372dadbdbc9f80b392afe1346e699d3e?source=copy_link"; // Посилання на Notion мінікурс
 

@@ -240,7 +240,7 @@ function renderResults() {
 }
 
 // --- CALENDAR & BOOKING LOGIC ---
-const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1I6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec"; 
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1I6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec";
 let currentWeekOffset = 0;
 let selectedSlot = null; // { timeStart, timeEnd, date }
 let busySlots = []; // from backend
