@@ -59,8 +59,17 @@
             <i data-lucide="brain" class="text-emerald-green"></i>
             LevelUp.Strategy
         </div>
-        <div id="progress-indicator" class="text-sm font-medium text-slate-500 bg-white/50 px-3 py-1 rounded-full border border-slate-200">
-            Крок 1: Вступ
+        <div class="flex items-center gap-3">
+            <div id="progress-indicator" class="text-sm font-medium text-slate-500 bg-white/50 px-3 py-1 rounded-full border border-slate-200">
+                Крок 1: Вступ
+            </div>
+            
+            <!-- Language Switcher -->
+            <div class="flex items-center bg-white/60 backdrop-blur-sm border border-slate-200 rounded-full p-0.5 text-[10px] sm:text-xs font-semibold shadow-sm">
+                <button onclick="changeLanguage('ua')" id="lang-btn-ua" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200 bg-emerald-green text-white">UA</button>
+                <button onclick="changeLanguage('en')" id="lang-btn-en" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200 text-slate-600 hover:text-deep-slate">EN</button>
+                <button onclick="changeLanguage('fr')" id="lang-btn-fr" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200 text-slate-600 hover:text-deep-slate">FR</button>
+            </div>
         </div>
     </header>
 
@@ -69,15 +78,15 @@
 
         <!-- STEP 1: Hero Section -->
         <section id="step-1" class="w-full max-w-5xl flex flex-col items-center text-center animate-fade-in">
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" data-i18n="hero_title">
                 Перестаньте боротися з хаосом<br/> 
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-green to-teal-500">Почніть керувати мозком</span>
             </h1>
-            <p class="text-lg sm:text-xl text-slate-600 max-w-3xl mb-10 leading-relaxed">
+            <p class="text-lg sm:text-xl text-slate-600 max-w-3xl mb-10 leading-relaxed" data-i18n="hero_desc">
                 Ваша продуктивність залежить не від сили волі, а від налаштування вашої біологічної та цифрової систем. Пройдіть швидкий аудит, щоб побачити свої «дірки» в системі
             </p>
             <button onclick="goToStep(2)" class="bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-10 rounded-full text-lg shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 mb-20">
-                Почати аудит <i data-lucide="arrow-right"></i>
+                <span data-i18n="hero_btn">Почати аудит</span> <i data-lucide="arrow-right"></i>
             </button>
 
             <!-- Methodology Cards -->
@@ -87,8 +96,8 @@
                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
                         <i data-lucide="folder-kanban"></i>
                     </div>
-                    <h3 class="font-bold text-lg mb-2">Звільніть свій розум</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
+                    <h3 class="font-bold text-lg mb-2" data-i18n="card1_title">Звільніть свій розум</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed" data-i18n="card1_desc">
                         Ми створимо ваш "Зовнішній мозок". Простір, де ідеї не губляться, а префронтальна кора відпочиває від запам'ятовування.
                     </p>
                 </div>
@@ -97,8 +106,8 @@
                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
                         <i data-lucide="target"></i>
                     </div>
-                    <h3 class="font-bold text-lg mb-2">Від мрій до кліків</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
+                    <h3 class="font-bold text-lg mb-2" data-i18n="card2_title">Від мрій до кліків</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed" data-i18n="card2_desc">
                         Розбиваємо глобальні цілі на мікро-кроки. Ваш мозок перестане вмикати опір і почне діяти автоматично.
                     </p>
                 </div>
@@ -107,8 +116,8 @@
                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
                         <i data-lucide="zap"></i>
                     </div>
-                    <h3 class="font-bold text-lg mb-2">Стан потоку</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
+                    <h3 class="font-bold text-lg mb-2" data-i18n="card3_title">Стан потоку</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed" data-i18n="card3_desc">
                         Налаштуємо графік за циркадними ритмами. Робіть важливе на піку енергії, а не коли доведеться.
                     </p>
                 </div>
@@ -117,8 +126,8 @@
                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
                         <i data-lucide="bar-chart-3"></i>
                     </div>
-                    <h3 class="font-bold text-lg mb-2">Розумна дисципліна</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
+                    <h3 class="font-bold text-lg mb-2" data-i18n="card4_title">Розумна дисципліна</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed" data-i18n="card4_desc">
                         Система зворотного зв'язку. Аналізуємо те, що заважає рости, і перетворюємо помилки на стратегію.
                     </p>
                 </div>
@@ -142,8 +151,8 @@
         <!-- STEP 3: Results -->
         <section id="step-3" class="w-full max-w-4xl hidden flex-col items-center animate-fade-in">
             <div class="text-center mb-10">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ваш Нейро-Профіль</h2>
-                <p class="text-slate-600 text-lg">Ось як ваш мозок взаємодіє з навантаженням зараз</p>
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4" data-i18n="result_heading">Ваш Нейро-Профіль</h2>
+                <p class="text-slate-600 text-lg" data-i18n="result_subheading">Ось як ваш мозок взаємодіє з навантаженням зараз</p>
             </div>
 
             <div class="flex flex-col md:flex-row gap-10 w-full mb-12">
@@ -163,11 +172,11 @@
                     </p>
                     
                     <div class="bg-slate-50 p-6 rounded-[24px] border border-slate-100">
-                        <h4 class="font-semibold mb-4">На стратегічному розборі ми:</h4>
+                        <h4 class="font-semibold mb-4" data-i18n="result_list_title">На стратегічному розборі ми:</h4>
                         <ul class="space-y-3 text-sm text-slate-700">
-                            <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-emerald-green shrink-0"></i> Визначимо індивідуальні "дірки" у вашій продуктивності</li>
-                            <li class="flex items-start gap-2"><i data-lucide="pen-tool" class="w-5 h-5 text-emerald-green shrink-0"></i> Підберемо ваш тип трекера (цифровий чи аналоговий)</li>
-                            <li class="flex items-start gap-2"><i data-lucide="zap" class="w-5 h-5 text-emerald-green shrink-0"></i> Побудуємо план захисту вашої енергії</li>
+                            <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-emerald-green shrink-0"></i> <span data-i18n="result_bullet1">Визначимо індивідуальні "дірки" у вашій продуктивності</span></li>
+                            <li class="flex items-start gap-2"><i data-lucide="pen-tool" class="w-5 h-5 text-emerald-green shrink-0"></i> <span data-i18n="result_bullet2">Підберемо ваш тип трекера (цифровий чи аналоговий)</span></li>
+                            <li class="flex items-start gap-2"><i data-lucide="zap" class="w-5 h-5 text-emerald-green shrink-0"></i> <span data-i18n="result_bullet3">Побудуємо план захисту вашої енергії</span></li>
                         </ul>
                     </div>
                 </div>
@@ -176,12 +185,12 @@
             <!-- CTA Area -->
             <div class="flex flex-col sm:flex-row gap-4 w-full max-w-2xl justify-center mt-8">
                 <!-- Primary CTA: View and Choose Tariff -->
-                <button onclick="clickViewFormats()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition duration-200 text-center block shadow-lg shadow-teal-600/20 transform hover:-translate-y-0.5 active:translate-y-0 text-sm">
+                <button onclick="clickViewFormats()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition duration-200 text-center block shadow-lg shadow-teal-600/20 transform hover:-translate-y-0.5 active:translate-y-0 text-sm" data-i18n="result_btn_formats">
                     Переглянути та обрати формат участі ➔
                 </button>
 
                 <!-- Secondary Outline CTA: Customize System -->
-                <button onclick="openSystemModal()" class="flex-1 bg-transparent border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold py-4 px-6 rounded-xl transition duration-200 text-center block transform hover:-translate-y-0.5 active:translate-y-0 text-sm">
+                <button onclick="openSystemModal()" class="flex-1 bg-transparent border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold py-4 px-6 rounded-xl transition duration-200 text-center block transform hover:-translate-y-0.5 active:translate-y-0 text-sm" data-i18n="result_btn_customize">
                     Підібрати систему під мій результат
                 </button>
             </div>
@@ -191,12 +200,12 @@
         <section id="step-4" class="w-full max-w-6xl hidden flex-col items-center animate-fade-in">
             <!-- Кнопка повернення до результатів тесту -->
             <button type="button" onclick="goToStep(3)" class="self-start mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition duration-150 group cursor-pointer">
-                <span>←</span> <span class="group-hover:underline">Назад до мого нейро-профілю</span>
+                <span>←</span> <span class="group-hover:underline" data-i18n="pricing_back">Назад до мого нейро-профілю</span>
             </button>
 
             <div class="text-center mb-12">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4">ТАРИФИ ТА ФОРМАТИ НАВЧАННЯ</h2>
-                <p class="text-slate-600 text-lg">Оберіть шлях до своєї продуктивності</p>
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4" data-i18n="pricing_title">ТАРИФИ ТА ФОРМАТИ НАВЧАННЯ</h2>
+                <p class="text-slate-600 text-lg" data-i18n="pricing_subtitle">Оберіть шлях до своєї продуктивності</p>
             </div>
 
             <!-- Bento Course Grid (3 columns) -->
@@ -204,33 +213,33 @@
                 <!-- Tariff 1: ЦИФРОВИЙ INBOX -->
                 <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.02] transition-all flex flex-col">
                     <h3 class="text-xl font-bold mb-2">ЦИФРОВИЙ INBOX</h3>
-                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">Самостійно</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6" data-i18n="t1_badge">Самостійно</p>
                     <div class="text-3xl font-bold mb-6">700 <span class="text-base font-normal text-slate-500">грн</span></div>
                     <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-600">
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> 4 базові уроки системи CODE</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Практичні гайди та завдання</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Доступ до шаблонів та баз даних</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t1_bullet1">4 базові уроки системи CODE</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t1_bullet2">Практичні гайди та завдання</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t1_bullet3">Доступ до шаблонів та баз даних</span></li>
                     </ul>
-                    <button onclick="openPaymentModal('Цифровий Inbox', 700, 'Міні-курс Цифровий Inbox (Notion)')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto">
+                    <button onclick="openPaymentModal('Цифровий Inbox', 700, 'Міні-курс Цифровий Inbox')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto" data-i18n="t1_btn">
                         Отримати доступ
                     </button>
                 </div>
 
                 <!-- Tariff 2: НЕЙРО-СПРИНТ -->
                 <div class="bg-deep-slate text-white p-8 rounded-[32px] shadow-xl hover:scale-105 transition-all relative flex flex-col border border-slate-700">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-wider">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-teal-500 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-wider" data-i18n="t2_group">
                         Групова практика
                     </div>
                     <h3 class="text-xl font-bold mb-2 mt-2">НЕЙРО-СПРИНТ</h3>
-                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">3 тижні щільного фокусу</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6" data-i18n="t2_badge">3 тижні щільного фокусу</p>
                     <div class="text-3xl font-bold mb-6">5 200 <span class="text-base font-normal text-slate-400">грн</span></div>
                     <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-300">
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Все, що у Тарифі 1</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Формат: 1 урок-інструкція + 1 жива сесія-розбір на тиждень</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Робота в групі (3-10 людей)</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> Перевірка домашніх завдань</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t2_bullet1">Все, що у Тарифі 1</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t2_bullet2">Формат: 1 урок-інструкція + 1 жива сесія-розбір на тиждень</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t2_bullet3">Робота в групі (3-10 людей)</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-teal-400 w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t2_bullet4">Перевірка домашніх завдань</span></li>
                     </ul>
-                    <button onclick="openPaymentModal('Нейро-Спринт', 700, 'Нейро-Спринт (Бронювання місця + Міні-курс)')" class="w-full text-center block bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-full transition-colors mt-auto">
+                    <button onclick="openPaymentModal('Нейро-Спринт', 700, 'Нейро-Спринт (Бронювання місця + Міні-курс)')" class="w-full text-center block bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-full transition-colors mt-auto" data-i18n="t2_btn">
                         Забронювати місце в групі
                     </button>
                 </div>
@@ -238,37 +247,37 @@
                 <!-- Tariff 3: АРХІТЕКТОР СИСТЕМ -->
                 <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:scale-[1.02] transition-all flex flex-col">
                     <h3 class="text-xl font-bold mb-2">АРХІТЕКТОР СИСТЕМ</h3>
-                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6">Індивідуально під ключ</p>
-                    <div class="text-2xl font-bold mb-6 text-slate-700 italic">За запитом</div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-6" data-i18n="t3_badge">Індивідуально під ключ</p>
+                    <div class="text-2xl font-bold mb-6 text-slate-700 italic" data-i18n="t3_price">За запитом</div>
                     <ul class="space-y-3 mb-8 flex-grow text-sm text-slate-600">
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Повна кастомізація під ваші бізнес- та життєві процеси</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Інтеграція AI-агентів для рутинних завдань</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Особистий супровід та менторинг</li>
-                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> Адаптація під РДУГ та навантаження</li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t3_bullet1">Повна кастомізація під ваші бізнес- та життєві процеси</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t3_bullet2">Інтеграція AI-агентів для рутинних завдань</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t3_bullet3">Особистий супровід та менторинг</span></li>
+                        <li class="flex gap-2 items-start"><i data-lucide="check" class="text-emerald-green w-4 h-4 mt-0.5 shrink-0"></i> <span data-i18n="t3_bullet4">Адаптація під РДУГ та навантаження</span></li>
                     </ul>
-                    <button onclick="selectTariffAndProceed('Архітектор Систем')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto">
-                        Подати заявку
-                    </button>
+                    <button onclick="openPaymentModal('Архітектор Систем', 2500, 'Персональний когнітивний аудит')" class="w-full text-center block border border-slate-300 hover:border-teal-600 hover:text-teal-600 font-semibold py-3 rounded-full transition-colors mt-auto" data-i18n="t3_btn">
+    Подати заявку
+</button>
                 </div>
             </div>
 
             <!-- Special Offer: Cognitive Audit -->
             <div class="w-full mt-12 bg-teal-50/50 border border-teal-100 rounded-[32px] p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
                 <div class="flex-grow">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 text-teal-800 text-xs font-semibold mb-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100/50 text-teal-800 text-xs font-semibold mb-4" data-i18n="audit_badge">
                         <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> ПОТРЕБУЄТЕ ШВИДКОГО РІШЕННЯ БЕЗ ПРОХОДЖЕННЯ КУРСІВ?
                     </div>
-                    <h4 class="text-xl font-bold text-deep-slate mb-2">Персональний когнітивний аудит</h4>
-                    <p class="text-slate-600 text-sm leading-relaxed max-w-2xl">
+                    <h4 class="text-xl font-bold text-deep-slate mb-2" data-i18n="audit_title">Персональний когнітивний аудит</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed max-w-2xl" data-i18n="audit_desc">
                         60-хвилинна глибока діагностика з автором системи. Ми знайдемо головні «петлі», які спалюють до 40% вашої енергії, і складемо покроковий план виходу з хаосу.
                     </p>
-                    <p class="text-xs text-slate-400 mt-2">
+                    <p class="text-xs text-slate-400 mt-2" data-i18n="audit_note">
                         * Якщо ви перейдете в індивідуальний супровід, вартість аудиту враховується в ціну
                     </p>
                 </div>
                 <div class="shrink-0 flex flex-col items-center md:items-end gap-2 w-full md:w-auto">
                     <div class="text-2xl font-bold text-deep-slate">2 500 <span class="text-sm font-normal text-slate-500">грн</span></div>
-                    <button onclick="openPaymentModal('Когнітивний Аудит', 2500, 'Персональний когнітивний аудит')" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 text-center shadow-md flex items-center justify-center gap-2">
+                    <button onclick="openPaymentModal('Когнітивний Аудит', 2500, 'Персональний когнітивний аудит')" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 text-center shadow-md flex items-center justify-center gap-2" data-i18n="audit_btn">
                         👉 Забронювати сесію в календарі
                     </button>
                 </div>
@@ -279,11 +288,11 @@
         <section id="step-5" class="w-full max-w-5xl hidden flex-col items-center animate-fade-in pb-12">
             <!-- Кнопка повернення до тарифів -->
             <button type="button" onclick="goToStep(4)" class="self-start mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition duration-150 group cursor-pointer">
-                <span>←</span> <span class="group-hover:underline">Повернутися до тарифів та форматів</span>
+                <span>←</span> <span class="group-hover:underline" data-i18n="cal_back">Повернутися до тарифів та форматів</span>
             </button>
 
             <div class="text-center mb-8">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Оберіть свій час</h2>
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4" data-i18n="cal_title">Оберіть свій час</h2>
                 <p id="calendar-instruction" class="text-slate-600 text-lg">Миттєве бронювання стратегічного розбору</p>
             </div>
 
@@ -309,7 +318,7 @@
                     <!-- Loader -->
                     <div id="calendar-loader" class="hidden flex-col items-center justify-center py-10">
                         <i data-lucide="loader-2" class="animate-spin text-emerald-green w-8 h-8 mb-2"></i>
-                        <span class="text-sm text-slate-500">Синхронізація розкладу...</span>
+                        <span class="text-sm text-slate-500" data-i18n="cal_sync_label">Синхронізація розкладу...</span>
                     </div>
                 </div>
 
@@ -318,24 +327,24 @@
                     <div class="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 sticky top-24">
                         <div id="booking-container">
                             <div id="selected-slot-info" class="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
-                                <p class="text-sm text-slate-500 mb-1">Обраний час:</p>
+                                <p class="text-sm text-slate-500 mb-1" data-i18n="succ_time_prefix">Обраний час:</p>
                                 <p id="selected-slot-text" class="font-bold text-lg text-emerald-green"></p>
                             </div>
 
                             <form id="booking-form" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
                                 <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1">ПІБ *</label>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_pib">ПІБ *</label>
                                     <input type="text" id="b-name" required pattern="[a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]+" title="Будь ласка, використовуйте тільки літери" oninput="this.value = this.value.replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]/g, '')" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="Ваше ім'я">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1">Телефон *</label>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_phone">Телефон *</label>
                                     <input type="tel" id="b-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_email">Email</label>
                                     <input type="email" id="b-email" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="name@example.com">
                                 </div>
-                                <button type="submit" id="btn-submit-booking" class="w-full bg-deep-slate text-white font-semibold py-4 rounded-full mt-4 hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2">
+                                <button type="submit" id="btn-submit-booking" class="w-full bg-deep-slate text-white font-semibold py-4 rounded-full mt-4 hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2" data-i18n="cal_form_btn">
                                     Підтвердити бронювання
                                 </button>
                             </form>
@@ -346,26 +355,26 @@
                             <div class="w-16 h-16 bg-emerald-100 text-emerald-green rounded-full flex items-center justify-center mb-4">
                                 <i data-lucide="calendar-check-2" class="w-8 h-8"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2">Заброньовано!</h3>
+                            <h3 class="text-xl font-bold mb-2" data-i18n="succ_header">Заброньовано!</h3>
                             <div class="mb-4 p-3 bg-white rounded-xl border border-emerald-100 shadow-sm w-full">
-                                <p class="text-xs text-slate-500 mb-1">Ваш обраний час:</p>
+                                <p class="text-xs text-slate-500 mb-1" data-i18n="succ_time_prefix">Ваш обраний час:</p>
                                 <p id="success-booked-time" class="font-bold text-emerald-green"></p>
                             </div>
-                            <p class="text-sm text-slate-500 mb-6">Куди бажаєте перейти далі?</p>
+                            <p class="text-sm text-slate-500 mb-6" data-i18n="succ_next_question">Куди бажаєте перейти далі?</p>
                             
                             <div class="space-y-3 w-full">
-                                <button onclick="goToStep(3)" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-3 rounded-full transition-all">
+                                <button onclick="goToStep(3)" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_profile">
                                     Мій Нейро-Профіль
                                 </button>
-                                <button onclick="goToStep(4)" class="w-full border border-slate-300 text-slate-700 hover:border-emerald-green hover:text-emerald-green font-semibold py-3 rounded-full transition-all">
+                                <button onclick="goToStep(4)" class="w-full border border-slate-300 text-slate-700 hover:border-emerald-green hover:text-emerald-green font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_tariffs">
                                     Тарифи
                                 </button>
-                                <button onclick="goToStep(1)" class="w-full text-slate-500 hover:text-slate-800 text-sm font-medium py-2 transition-all">
+                                <button onclick="goToStep(1)" class="w-full text-slate-500 hover:text-slate-800 text-sm font-medium py-2 transition-all" data-i18n="succ_btn_main">
                                     На головну
                                 </button>
                                 
                                 <div class="pt-4 mt-4 border-t border-slate-100">
-                                    <button onclick="cancelBooking()" class="w-full text-red-500 hover:text-red-700 text-sm font-medium py-2 transition-all border border-red-100 hover:bg-red-50 rounded-full">
+                                    <button onclick="cancelBooking()" class="w-full text-red-500 hover:text-red-700 text-sm font-medium py-2 transition-all border border-red-100 hover:bg-red-50 rounded-full" data-i18n="succ_btn_cancel">
                                         Скасувати або змінити час
                                     </button>
                                 </div>
@@ -391,8 +400,8 @@
                 <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-green">
                     <i data-lucide="credit-card" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-xl font-bold text-deep-slate">Оформлення замовлення</h3>
-                <p id="payment-product-title" class="text-sm text-slate-500 mt-1 font-medium">Міні-курс Цифровий Inbox (Notion)</p>
+                <h3 class="text-xl font-bold text-deep-slate" data-i18n="modal_pay_title">Оформлення замовлення</h3>
+                <p id="payment-product-title" class="text-sm text-slate-500 mt-1 font-medium">Міні-курс Цифровий Inbox</p>
                 <p id="payment-product-price" class="text-2xl font-bold text-emerald-green mt-2">700 UAH</p>
                 <p id="payment-product-note" class="text-xs text-slate-400 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 hidden leading-relaxed"></p>
             </div>
@@ -400,24 +409,24 @@
             <!-- Form -->
             <form id="payment-form" class="space-y-4" onsubmit="submitPayment(event)">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">ПІБ *</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_pib">ПІБ *</label>
                     <input type="text" id="p-name" required pattern="[a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]+" title="Будь ласка, використовуйте тільки літери" oninput="this.value = this.value.replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]/g, '')" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all text-sm" placeholder="Ваше ім'я">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Email *</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_email">Email *</label>
                     <input type="email" id="p-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all text-sm" placeholder="name@example.com">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Телефон *</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_phone">Телефон *</label>
                     <input type="tel" id="p-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all text-sm">
                 </div>
                 <div class="flex items-start gap-2.5">
                     <input type="checkbox" id="p-gdpr" required class="mt-1 rounded text-emerald-green focus:ring-emerald-green/20 h-4 w-4 border-slate-300">
-                    <label for="p-gdpr" class="text-xs text-slate-500 leading-tight">
+                    <label for="p-gdpr" class="text-xs text-slate-500 leading-tight" data-i18n="modal_pay_gdpr">
                         Я згоден на обробку персональних даних та погоджуюсь з умовами <a href="oferta.pdf" target="_blank" class="underline hover:text-emerald-green">Публічної оферти</a>.
                     </label>
                 </div>
-                <button type="submit" id="btn-submit-payment" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-bold py-3.5 rounded-full transition-all active:scale-95 flex justify-center items-center gap-2 mt-4 text-sm shadow-lg shadow-emerald-500/30">
+                <button type="submit" id="btn-submit-payment" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-bold py-3.5 rounded-full transition-all active:scale-95 flex justify-center items-center gap-2 mt-4 text-sm shadow-lg shadow-emerald-500/30" data-i18n="modal_pay_btn">
                     Перейти до оплати
                 </button>
             </form>
@@ -437,18 +446,18 @@
                 <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center mb-4 text-amber-600">
                     <i data-lucide="cpu" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-xl font-bold text-deep-slate">🧠 Функціонал кастомізації систем — у розробці!</h3>
+                <h3 class="text-xl font-bold text-deep-slate" data-i18n="modal_custom_title">🧠 Функціонал кастомізації систем — у розробці!</h3>
             </div>
 
             <!-- Modal Description -->
             <div class="space-y-4 text-sm text-slate-600 leading-relaxed mb-6">
-                <p>
-                    Наша нейромережа зараз навчається автоматично збирати персональний стек інструментів (Notion-шаблони, PDF-трекери та блокери) під індивідуальні дефіцити вашої префронтальної кори.
+                <p data-i18n="modal_custom_desc1">
+                    Наша нейромережа зараз навчається автоматично збирати персональний стек інструментів під індивідуальні дефіцити вашої префронтальної кори.
                 </p>
-                <p class="font-medium text-deep-slate">
+                <p class="font-medium text-deep-slate" data-i18n="modal_custom_desc2">
                     Бажаєте отримати вашу систему першими безкоштовно після релізу?
                 </p>
-                <p>
+                <p data-i18n="modal_custom_desc3">
                     Залиште ваш Telegram або Email, і ми автоматично надішлемо систему, щойно вона пройде бета-тест.
                 </p>
             </div>
@@ -462,11 +471,11 @@
                 </div>
                 <div class="flex items-start gap-2.5">
                     <input type="checkbox" id="lead-gdpr" required class="mt-1 rounded text-teal-600 focus:ring-teal-600/20 h-4 w-4 border-slate-300">
-                    <label for="lead-gdpr" class="text-xs text-slate-500 leading-tight">
+                    <label for="lead-gdpr" class="text-xs text-slate-500 leading-tight" data-i18n="modal_custom_gdpr">
                         Я згоден на обробку персональних даних згідно з <a href="oferta.pdf" target="_blank" class="underline hover:text-teal-600">Політикою Конфіденційності</a>.
                     </label>
                 </div>
-                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-full transition-all active:scale-95 flex justify-center items-center gap-2 mt-4 text-sm shadow-lg shadow-teal-600/20">
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-full transition-all active:scale-95 flex justify-center items-center gap-2 mt-4 text-sm shadow-lg shadow-teal-600/20" data-i18n="modal_custom_btn">
                     Забронювати мою систему безкоштовно
                 </button>
             </form>
@@ -486,7 +495,7 @@
                 <div class="p-2 rounded-full bg-slate-100 group-hover:bg-emerald-50 transition-colors">
                     <i data-lucide="send" class="w-4 h-4 group-hover:text-emerald-green"></i>
                 </div>
-                <span class="font-medium">Telegram Канал</span>
+                <span class="font-medium" data-i18n="foot_tg">Telegram Канал</span>
             </a>
             <a href="https://www.instagram.com/nadiia.bielaia?igsh=MXJlZm5zdjh2MjJhNw%3D%3D&utm_source=qr" target="_blank" class="flex items-center gap-2 hover:text-emerald-green transition-colors group">
                 <div class="p-2 rounded-full bg-slate-100 group-hover:bg-emerald-50 transition-colors">
@@ -496,16 +505,13 @@
             </a>
         </div>
         <p class="mb-2">
-            <a href="oferta.pdf" target="_blank" class="hover:text-emerald-green underline transition-colors">ДОГОВІР ПУБЛІЧНОЇ ОФЕРТИ</a>
+            <a href="oferta.pdf" target="_blank" class="hover:text-emerald-green underline transition-colors" data-i18n="foot_oferta">ДОГОВІР ПУБЛІЧНОЇ ОФЕРТИ</a>
         </p>
-        <p>&copy; 2026 LevelUp.Strategy. Всі права захищено.</p>
+        <p>&copy; 2026 LevelUp.Strategy. <span data-i18n="foot_copy">Всі права захищено.</span></p>
     </footer>
 
     <!-- Intl Tel Input JS -->
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
-
-    <!-- WayForPay Widget Script -->
-    <script id="widget-wfp-script" language="javascript" type="text/javascript" src="https://secure.wayforpay.com/server/pay-widget.js"></script>
 
     <!-- App Logic -->
     <script src="app.js"></script>
