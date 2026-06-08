@@ -3,10 +3,19 @@ lucide.createIcons();
 
 // Init Intl Tel Input
 let iti;
+let payIti;
 document.addEventListener("DOMContentLoaded", () => {
     const phoneInput = document.querySelector("#b-phone");
     if(phoneInput && window.intlTelInput) {
         iti = window.intlTelInput(phoneInput, {
+            initialCountry: "ua",
+            strictMode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+        });
+    }
+    const payPhoneInput = document.querySelector("#p-phone");
+    if(payPhoneInput && window.intlTelInput) {
+        payIti = window.intlTelInput(payPhoneInput, {
             initialCountry: "ua",
             strictMode: true,
             utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
@@ -538,9 +547,10 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 
     const phone = iti ? iti.getNumber() : document.getElementById('b-phone').value;
     const email = document.getElementById('b-email').value.trim();
+    const tariff = sessionStorage.getItem('user_intent_tariff') || "Аудит";
 
     const payload = {
-        name, phone, email,
+        name, phone, email, tariff,
         slot: selectedSlot.date.toISOString(),
         quizScores: scores
     };
@@ -706,5 +716,252 @@ async function submitSystemLead(event) {
         } catch (err) {
             console.error("Помилка відправки ліда:", err);
         }
+    }
+}
+
+// --- WAYFORPAY PAYMENT INTEGRATION ---
+let currentPaymentTariff = "";
+let currentPaymentAmount = 0;
+let currentPaymentProductName = "";
+
+function openPaymentModal(tariffName, amount, productName) {
+    currentPaymentTariff = tariffName;
+    currentPaymentAmount = amount;
+    currentPaymentProductName = productName;
+
+    document.getElementById('payment-product-title').textContent = productName;
+    document.getElementById('payment-product-price').textContent = `${amount} UAH`;
+
+    // Show note for Neuro-Sprint deposit
+    const noteEl = document.getElementById('payment-product-note');
+    if (noteEl) {
+        if (tariffName === 'Нейро-Спринт') {
+            noteEl.textContent = "Завдаток 700 UAH для бронювання місця. Решта (4500 UAH) сплачується після старту групи. Міні-курс ви отримаєте одразу після оплати.";
+            noteEl.classList.remove('hidden');
+        } else {
+            noteEl.classList.add('hidden');
+        }
+    }
+
+    // Clear form fields
+    document.getElementById('p-name').value = "";
+    document.getElementById('p-email').value = "";
+    if (payIti) {
+        payIti.setNumber("");
+    } else {
+        document.getElementById('p-phone').value = "";
+    }
+    document.getElementById('p-gdpr').checked = false;
+
+    const modal = document.getElementById('payment-modal');
+    if (modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+    }
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (modal) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        const card = modal.querySelector('div');
+        if (card) {
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+    }
+}
+
+async function getPaymentSignature(ref, date, amount, currency, prodName) {
+    if (!WEBHOOK_URL || !WEBHOOK_URL.startsWith("http")) {
+        throw new Error("Google Apps Script URL is not configured.");
+    }
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        const callbackName = 'jsonpPaymentSig_' + Math.round(100000 * Math.random());
+        
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error("Тайм-аут генерації підпису. Перевірте доступність Google Apps Script."));
+        }, 8000);
+
+        window[callbackName] = function(data) {
+            clearTimeout(timeoutId);
+            cleanup();
+            if (data.status === "success" && data.signature) {
+                resolve(data.signature);
+            } else {
+                reject(new Error(data.message || "Не вдалося отримати підпис від сервера."));
+            }
+        };
+        
+        const cleanup = () => {
+            delete window[callbackName];
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
+        };
+
+        const encodedProdName = encodeURIComponent(prodName);
+        script.src = `${WEBHOOK_URL}?action=getSignature&orderReference=${ref}&orderDate=${date}&amount=${amount}&currency=${currency}&productName=${encodedProdName}&callback=${callbackName}&t=${new Date().getTime()}`;
+        
+        script.onerror = function() {
+            clearTimeout(timeoutId);
+            cleanup();
+            reject(new Error("Помилка підключення до сервера Google Apps Script."));
+        };
+        
+        document.body.appendChild(script);
+    });
+}
+
+async function submitPayment(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('p-name').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+    
+    if (!name || name.length < 2) {
+        showAtomicNotification("Будь ласка, введіть коректне ім'я.", false);
+        return;
+    }
+
+    if (payIti && !payIti.isValidNumber()) {
+        showAtomicNotification("Будь ласка, введіть коректний номер телефону.", false);
+        return;
+    }
+
+    const phone = payIti ? payIti.getNumber() : document.getElementById('p-phone').value;
+    const gdpr = document.getElementById('p-gdpr').checked;
+    if (!gdpr) {
+        showAtomicNotification("Ви повинні погодитися з Публічною офертою.", false);
+        return;
+    }
+
+    const nameParts = name.split(/\s+/);
+    const firstName = nameParts[0] || "Клієнт";
+    const lastName = nameParts.slice(1).join(" ") || "Клієнт";
+
+    const btnSubmit = document.getElementById('btn-submit-payment');
+    const originalBtnText = btnSubmit.innerHTML;
+    
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></span> Обробка...`;
+
+    const isInbox = currentPaymentTariff === "Цифровий Inbox";
+    const refPrefix = isInbox ? "INBOX" : "AUDIT";
+    const ref = `WFP_${refPrefix}_${Date.now()}`;
+    const date = Math.floor(Date.now() / 1000);
+    const amount = currentPaymentAmount.toString();
+
+    // Зберегти результати аудиту та контакти клієнта у "Ліди" як ініційовану оплату
+    const totalScore = scores.load + scores.focus + scores.system;
+    let profileName = "Дефіцит фокусу";
+    let profileTag = "Профіль_Дистракція";
+    if (totalScore > 200) {
+        profileName = "Системний потенціал";
+        profileTag = "Профіль_Потенціал";
+    } else if (totalScore < 120) {
+        profileName = "Когнітивне перевантаження";
+        profileTag = "Профіль_Перевантаження";
+    }
+
+    const leadPayload = {
+        action: "lead",
+        contact: `Ім'я: ${name}, Email: ${email}, Тел: ${phone}`,
+        profile: `${profileName} (Стійкість: ${scores.load}, Фокус: ${scores.focus}, Системність: ${scores.system})`,
+        tags: [`Ініційовано_Оплату_${refPrefix}`, profileTag]
+    };
+
+    if (WEBHOOK_URL.startsWith("http")) {
+        try {
+            fetch(WEBHOOK_URL, {
+                method: "POST",
+                mode: 'no-cors',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(leadPayload)
+            });
+        } catch (err) {
+            console.error("Помилка запису ліда перед оплатою:", err);
+        }
+    }
+    const currency = "UAH";
+    const prodName = currentPaymentProductName;
+
+    try {
+        const signature = await getPaymentSignature(ref, date, amount, currency, prodName);
+
+        closePaymentModal();
+
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnText;
+
+        const wayforpay = new Wayforpay();
+        wayforpay.run({
+            merchantAccount: "t_me_d09a8",
+            merchantDomainName: "nadiabielaia-create.github.io",
+            authorizationType: "SimpleSignature",
+            merchantSignature: signature,
+            orderReference: ref,
+            orderDate: date,
+            amount: amount,
+            currency: currency,
+            productName: [prodName],
+            productPrice: [amount],
+            productCount: [1],
+            clientFirstName: firstName,
+            clientLastName: lastName,
+            clientEmail: email,
+            clientPhone: phone
+        },
+        function (response) {
+            if (isInbox || currentPaymentTariff === "Нейро-Спринт") {
+                window.location.href = "https://nadiabielaia-create.github.io/second-brain-site/success.html";
+            } else {
+                sessionStorage.setItem('user_intent_tariff', 'Когнітивний Аудит');
+                sessionStorage.setItem('payment_success_audit', 'true');
+                
+                setTimeout(() => {
+                    const bNameInput = document.getElementById('b-name');
+                    const bEmailInput = document.getElementById('b-email');
+                    
+                    if (bNameInput) bNameInput.value = name;
+                    if (bEmailInput) bEmailInput.value = email;
+                    if (iti && payIti) {
+                        iti.setNumber(payIti.getNumber());
+                    } else {
+                        const bPhoneInput = document.getElementById('b-phone');
+                        if (bPhoneInput) bPhoneInput.value = phone;
+                    }
+                    
+                    const bForm = document.getElementById('booking-form');
+                    if (bForm) {
+                        bForm.classList.remove('opacity-50', 'pointer-events-none');
+                    }
+                }, 100);
+
+                goToStep(5);
+                showAtomicNotification("Оплата успішна! Будь ласка, оберіть час для вашої сесії в календарі.");
+            }
+        },
+        function (response) {
+            showAtomicNotification("Платіж відхилено. Спробуйте іншу картку або зверніться до банку.", false);
+        },
+        function (response) {
+            showAtomicNotification("Оплата в обробці. Зачекайте завершення транзакції.");
+        });
+
+    } catch (err) {
+        console.error(err);
+        showAtomicNotification(err.message || "Помилка при ініціалізації платежу.", false);
+        
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnText;
     }
 }
