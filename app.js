@@ -789,7 +789,7 @@ function renderResults() {
 }
 
 // --- CALENDAR & BOOKING LOGIC ---
-const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1I6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec"; 
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1l6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec";
 let currentWeekOffset = 0;
 let selectedSlot = null;
 let busySlots = [];
@@ -966,17 +966,11 @@ function renderCalendarUI() {
                 slotTime.setHours(h, parseInt(min), 0, 0);
 
                 if (slotTime > now) {
-                    const parisTimeString = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris"});
-                    const parisDate = new Date(parisTimeString);
-                    
-                    const dayOfWeek = parisDate.getDay();
-                    const hours = parisDate.getHours();
-
-                    if (dayOfWeek === 0 || dayOfWeek === 6) return;
-                    if (hours < 9 || hours >= 19) return;
-
-                    const localHour = slotTime.getHours();
-                    const localMin = slotTime.getMinutes() === 0 ? '00' : '30';
+                                                      const parisHour = parseInt(slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", hour: "numeric", hour12: false}));
+                 const parisDay = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", weekday: "short"}); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+                 
+                 if (parisDay === "Sat" || parisDay === "Sun") return;
+                 if (parisHour < 9 || parisHour >= 19) return;
                     const timeStr = `${localHour}:${localMin}`;
                     
                     const isBusy = busySlots.some(busy => {

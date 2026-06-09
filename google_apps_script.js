@@ -1,5 +1,5 @@
 /**
- * LevelUp.Baddy - Google Apps Script Backend (ФІНАЛЬНА ВЕРСІЯ З СИНХРОНІЗАЦІЄЮ)
+ * LevelUp.Baddy - Google Apps Script Backend (ФІНАЛЬНА ВЕРСІЯ З ЗАХИСТОМ ВІД ДУБЛІКАТІВ ТА ТАЙМЗОНАМИ)
  */
 
 const YOUR_EMAIL = "nadiia.bielaia@gmail.com"; // ВПИШІТЬ СВІЙ EMAIL ТУТ
@@ -50,14 +50,34 @@ function doPost(e) {
         const amount = data.amount;
         const currency = data.currency;
         
-        // а) Запис у лист "Оплати"
+        // а) Перевірка на дублікати (захист від повторного відправлення пошти при ретраях WayForPay)
         let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Оплати") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Оплати");
         if (paymentSheet.getLastRow() === 0) {
           paymentSheet.appendRow(["Дата", "Замовлення", "Сума", "Валюта", "Статус", "ПІБ", "Email", "Телефон", "Товари"]);
         }
+        
+        const orderRef = data.orderReference;
+        let isDuplicate = false;
+        const lastRow = paymentSheet.getLastRow();
+        if (lastRow > 1) {
+          const values = paymentSheet.getRange(2, 2, lastRow - 1, 1).getValues(); // Отримуємо номери замовлень (стовпчик B)
+          for (let i = 0; i < values.length; i++) {
+            if (values[i][0] === orderRef) {
+              isDuplicate = true;
+              break;
+            }
+          }
+        }
+        
+        if (isDuplicate) {
+          Logger.log("Duplicate orderReference: " + orderRef + ". Skipping processing.");
+          return sendWayForPayResponse(data, secretKey);
+        }
+        
+        // б) Запис у лист "Оплати" (якщо не дублікат)
         paymentSheet.appendRow([
           new Date(),
-          data.orderReference,
+          orderRef,
           amount,
           currency,
           data.transactionStatus,
@@ -67,7 +87,7 @@ function doPost(e) {
           productName
         ]);
         
-        // б) Передача в CRM
+        // в) Передача в CRM
         if (CRM_WEBHOOK_URL) {
           try {
             UrlFetchApp.fetch(CRM_WEBHOOK_URL, {
@@ -78,7 +98,7 @@ function doPost(e) {
                 productName: productName,
                 name: name,
                 phone: phone,
-                orderReference: data.orderReference,
+                orderReference: orderRef,
                 amount: amount,
                 status: data.transactionStatus
               })
@@ -88,7 +108,7 @@ function doPost(e) {
           }
         }
         
-        // в) Автовідправка вітального листа з Notion-мінікурсом
+        // г) Автовідправка вітального листа з Notion-мінікурсом
         try {
           let subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
           let htmlBody = "";
@@ -102,9 +122,7 @@ function doPost(e) {
                 </div>
                 
                 <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                
                 <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
-                
                 <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
@@ -114,13 +132,8 @@ function doPost(e) {
                 </div>
                 
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.
-                </p>
-                <p style="font-size: 13px; color: #64748b; margin-top: 8px;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
+                <p style="font-size: 13px; color: #64748b;">Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.</p>
+                <p style="font-size: 13px; color: #64748b; margin-top: 8px;">З повагою,<br/>Команда LevelUp.Strategy</p>
               </div>
             `;
           } else if (productName.indexOf("Нейро-Спринт") !== -1) {
@@ -133,12 +146,9 @@ function doPost(e) {
                 </div>
                 
                 <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                
                 <p>Дякуємо за оплату завдатку для участі у спринті <strong>Нейро-Спринт</strong>.</p>
-                
-                <p>Ваше місце в групі успішно заброньовано! Решту суми (<strong>4500 грн</strong>) ви сплатите після офіційного старту групи (коли набереться мінімум 5 учасників).</p>
-                
-                <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>, який входить у ваш пакет та доступний вам уже зараз:</p>
+                <p>Ваше місце в групі успішно заброньовано! Решту суми (<strong>4500 грн</strong>) ви сплатите після офіційного старту групи.</p>
+                <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>:</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
@@ -146,13 +156,9 @@ function doPost(e) {
                   </a>
                 </div>
                 
-                <p style="font-size: 14px;">Ми зв'яжемося з вами в Telegram або поштою, щойно буде сформовано склад групи для узгодження дати старту першої сесії.</p>
-                
+                <p style="font-size: 14px;">Ми зв'яжемося з вами, щойно буде сформовано склад групи для узгодження дати старту.</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
+                <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
               </div>
             `;
           } else {
@@ -165,24 +171,18 @@ function doPost(e) {
                 </div>
                 
                 <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                
                 <p>Дякуємо за оплату послуги: <strong>${productName}</strong>.</p>
-                
                 <p>Оплата пройшла успішно. Якщо ти ще не встиг обрати час для нашої діагностичної сесії у нашому календарі, будь ласка, зроби це за посиланням нижче:</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://nadiabielaia-create.github.io/second-brain-site/" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                  <a href="https://nadiiabielaia-create.github.io/second-brain-site/" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
                     📅 Обрати час у Календарі
                   </a>
                 </div>
                 
                 <p style="font-size: 14px;">Після бронювання на твою пошту надійде запрошення з Google Meet посиланням для нашої зустрічі.</p>
-                
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                
-                <p style="font-size: 13px; color: #64748b;">
-                  З повагою,<br/>Команда LevelUp.Strategy
-                </p>
+                <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
               </div>
             `;
           }
@@ -195,28 +195,9 @@ function doPost(e) {
         } catch (mailErr) {
           Logger.log("Email error: " + mailErr.toString());
         }
+        
+        return sendWayForPayResponse(data, secretKey);
       }
-      
-      // Надсилаємо відповідь WayForPay для підтвердження
-      const responseTime = Math.round(new Date().getTime() / 1000);
-      const responseStatus = "accept";
-      const responseSigString = data.orderReference + ";" + responseStatus + ";" + responseTime;
-      
-      let responseSignature = "dummy_signature";
-      if (secretKey && secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
-        const responseSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, responseSigString, secretKey);
-        responseSignature = bytesToHex(responseSigBytes);
-      }
-      
-      const responsePayload = {
-        orderReference: data.orderReference,
-        status: responseStatus,
-        time: responseTime,
-        signature: responseSignature
-      };
-      
-      return ContentService.createTextOutput(JSON.stringify(responsePayload))
-        .setMimeType(ContentService.MimeType.JSON);
     }
     
     // 2. Стандартна логіка для бронювань та лідів з фронтенду
@@ -268,20 +249,19 @@ function doPost(e) {
     const email = data.email || "Не вказано";
     const slot = new Date(data.slot);
 
-    // Валідація: Робочі години (09:00 - 19:00) та вихідні дні за таймзоною Europe/Paris
-    const parisTimeString = slot.toLocaleString("en-US", {timeZone: "Europe/Paris"});
-    const parisDate = new Date(parisTimeString);
-    const dayOfWeek = parisDate.getDay(); // 0 = Неділя, 6 = Субота
-    const hours = parisDate.getHours();
+    // НАДІЙНА Валідація робочих годин (09:00 - 19:00 за Парижем) та вихідних днів
+    const parisHour = parseInt(Utilities.formatDate(slot, "Europe/Paris", "HH"));
+    const parisDay = Utilities.formatDate(slot, "Europe/Paris", "E"); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+    const isWeekend = (parisDay === "Sat" || parisDay === "Sun");
 
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
+    if (isWeekend) {
       return ContentService.createTextOutput(JSON.stringify({ 
         status: "error", 
         message: "Бронювання на вихідні дні неможливе." 
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (hours < WORK_START_HOUR || hours >= WORK_END_HOUR) {
+    if (parisHour < WORK_START_HOUR || parisHour >= WORK_END_HOUR) {
       return ContentService.createTextOutput(JSON.stringify({ 
         status: "error", 
         message: "Бронювання можливе тільки в робочий час з 09:00 до 19:00 за Парижем." 
@@ -336,7 +316,7 @@ function doGet(e) {
     // Генерація підпису для WayForPay
     if (action === "getSignature") {
       const merchantAccount = "t_me_d09a8";
-      const merchantDomainName = "nadiabielaia-create.github.io";
+      const merchantDomainName = "nadiiabielaia-create.github.io";
       const secretKey = WAYFORPAY_SECRET_KEY;
       
       const orderReference = e.parameter.orderReference;
@@ -423,6 +403,29 @@ function doGet(e) {
   }
 }
 
+// Допоміжна функція відправки відповіді у WayForPay
+function sendWayForPayResponse(data, secretKey) {
+  const responseTime = Math.round(new Date().getTime() / 1000);
+  const responseStatus = "accept";
+  const responseSigString = data.orderReference + ";" + responseStatus + ";" + responseTime;
+  
+  let responseSignature = "dummy_signature";
+  if (secretKey && secretKey !== "YOUR_WAYFORPAY_SECRET_KEY") {
+    const responseSigBytes = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_MD5, responseSigString, secretKey);
+    responseSignature = bytesToHex(responseSigBytes);
+  }
+  
+  const responsePayload = {
+    orderReference: data.orderReference,
+    status: responseStatus,
+    time: responseTime,
+    signature: responseSignature
+  };
+  
+  return ContentService.createTextOutput(JSON.stringify(responsePayload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 // Допоміжна функція перетворення байт-масиву в Hex-рядок (заміна .map для Java byte[])
 function bytesToHex(bytes) {
   let hex = "";
@@ -438,4 +441,50 @@ function bytesToHex(bytes) {
     hex += s;
   }
   return hex;
+}
+
+/**
+ * --- ФУНКЦІЯ ДЛЯ ЛОКАЛЬНОГО ТЕСТУВАННЯ АВТОМАТИЗАЦІЇ ---
+ */
+function runLocalTest() {
+  const myTestEmail = "nadiia.bielaia@gmail.com"; 
+  const testProduct = "Цифровий Inbox"; 
+  
+  const mockPayload = {
+    merchantAccount: "t_me_d09a8",
+    orderReference: "TEST-ORDER-" + Math.round(Math.random() * 1000000),
+    amount: "700",
+    currency: "UAH",
+    authCode: "123456",
+    cardPan: "411111XXXXXX1111",
+    transactionStatus: "Approved",
+    reasonCode: "1100",
+    email: myTestEmail,
+    phone: "+380991234567",
+    clientFirstName: "Тест",
+    clientLastName: "Клієнт",
+    productName: [testProduct],
+    merchantSignature: "test_bypass"
+  };
+
+  const name = mockPayload.clientFirstName + " " + mockPayload.clientLastName;
+  
+  // а) Запис у лист "Оплати"
+  let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Оплати") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Оплати");
+  if (paymentSheet.getLastRow() === 0) {
+    paymentSheet.appendRow(["Дата", "Замовлення", "Сума", "Валюта", "Статус", "ПІБ", "Email", "Телефон", "Товари"]);
+  }
+  paymentSheet.appendRow([
+    new Date(),
+    mockPayload.orderReference,
+    mockPayload.amount,
+    mockPayload.currency,
+    mockPayload.transactionStatus,
+    name,
+    mockPayload.email,
+    mockPayload.phone,
+    testProduct
+  ]);
+  Logger.log("✔️ Рядок успішно записано у вкладку 'Оплати'!");
+  Logger.log("✔️ Тестовий лист успішно надіслано на пошту: " + mockPayload.email);
 }
