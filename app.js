@@ -539,6 +539,7 @@ const CALENDAR_TRANSLATIONS = {
         busy_sync_label: "Synchronisation de l'agenda...",
         busy_slots_debug: "Synchronisé. Événements occupés trouvés dans votre agenda : ",
         error_name: "Veuillez entrer un nom valide.",
+        error_email_invalid: "Veuillez entrer une adresse e-mail valide.",
         error_phone: "Veuillez entrer un numéro de téléphone entièrement correct.",
         error_booking_exists: "Vous avez déjà une session réservée.",
         cancel_booking_confirm: "Êtes-vous sûr de vouloir annuler votre réservation actuelle ?",
@@ -556,6 +557,43 @@ const CALENDAR_TRANSLATIONS = {
 function isValidEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
+}
+
+function showAtomicNotification(message, isSuccess = true) {
+    const notification = document.getElementById('atomic-notification');
+    const textEl = document.getElementById('atomic-text');
+    if (!notification || !textEl) return;
+
+    // Set text
+    textEl.textContent = message;
+
+    // Set icon colors/style based on success
+    const iconContainer = notification.querySelector('.bg-emerald-green, .bg-red-500');
+    if (iconContainer) {
+        if (isSuccess) {
+            iconContainer.className = "bg-emerald-green text-white rounded-full p-1";
+            iconContainer.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+        } else {
+            iconContainer.className = "bg-red-500 text-white rounded-full p-1";
+            iconContainer.innerHTML = '<i data-lucide="x" class="w-4 h-4"></i>';
+        }
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    }
+
+    // Show notification
+    notification.classList.remove('translate-y-24', 'opacity-0');
+    notification.classList.add('translate-y-0', 'opacity-100');
+
+    // Auto hide after 4 seconds
+    if (window.atomicNotificationTimeout) {
+        clearTimeout(window.atomicNotificationTimeout);
+    }
+    window.atomicNotificationTimeout = setTimeout(() => {
+        notification.classList.remove('translate-y-0', 'opacity-100');
+        notification.classList.add('translate-y-24', 'opacity-0');
+    }, 4000);
 }
 
 // --- LANGUAGE SWITCHER LOGIC ---
@@ -966,11 +1004,14 @@ function renderCalendarUI() {
                 slotTime.setHours(h, parseInt(min), 0, 0);
 
                 if (slotTime > now) {
-                                                      const parisHour = parseInt(slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", hour: "numeric", hour12: false}));
-                 const parisDay = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", weekday: "short"}); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-                 
-                 if (parisDay === "Sat" || parisDay === "Sun") return;
-                 if (parisHour < 9 || parisHour >= 19) return;
+                    const parisHour = parseInt(slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", hour: "numeric", hour12: false}));
+                    const parisDay = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", weekday: "short"}); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+                    
+                    if (parisDay === "Sat" || parisDay === "Sun") return;
+                    if (parisHour < 9 || parisHour >= 19) return;
+                    
+                    const localHour = String(slotTime.getHours()).padStart(2, '0');
+                    const localMin = String(slotTime.getMinutes()).padStart(2, '0');
                     const timeStr = `${localHour}:${localMin}`;
                     
                     const isBusy = busySlots.some(busy => {
@@ -1241,7 +1282,7 @@ function openPaymentModal(tariffName, amount, productName) {
             noteEl.className = "text-xs text-slate-600 mt-4 bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-100 leading-relaxed text-left block animate-fade-in";
         } else if (tariffName === "Когнітивний Аудит") {
             const descAudit = {
-                ua: `📅 <strong>Наступний крок:</strong> Після оплати система автоматично перенаправить вас назад на сайт, де ви зможете обрати зручний день та час нашої сесії в календарі.`,
+                ua: `📅 <strong>Наступний крок:</strong> Після оплати system автоматично перенаправить вас назад на сайт, де ви зможете обрати зручний день та час нашої сесії в календарі.`,
                 en: `📅 <strong>Next step:</strong> Immediately after payment, the system will redirect you back here, allowing you to choose a convenient day and time in our calendar.`,
                 fr: `📅 <strong>Étape suivante :</strong> Dès le paiement validé, vous serez redirigé vers notre site pour choisir le jour et l'heure de votre séance dans le calendrier.`
             };
