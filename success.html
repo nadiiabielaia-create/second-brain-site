@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LevelUp.Strategy — Оплата успішна</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'warm-sand': '#fcfcfb',
+                        'deep-slate': '#1e293b',
+                        'emerald-green': '#10b981',
+                        'emerald-hover': '#059669',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'scale-up': 'scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleUp: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-warm-sand text-deep-slate font-sans antialiased neural-bg min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="glass-header px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" onclick="goHome()">
+            <i data-lucide="brain" class="text-emerald-green"></i>
+            LevelUp.Strategy
+        </div>
+        
+        <!-- Language Switcher -->
+        <div class="flex items-center bg-white/60 backdrop-blur-sm border border-slate-200 rounded-full p-0.5 text-[10px] sm:text-xs font-semibold shadow-sm">
+            <button onclick="changeLanguage('ua')" id="lang-btn-ua" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200">UA</button>
+            <button onclick="changeLanguage('en')" id="lang-btn-en" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200">EN</button>
+            <button onclick="changeLanguage('fr')" id="lang-btn-fr" class="px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200">FR</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
+        <div class="w-full max-w-lg bg-white/80 backdrop-blur-md p-8 sm:p-10 rounded-[32px] shadow-xl shadow-slate-200/50 border border-slate-100/85 text-center animate-scale-up">
+            
+            <!-- Success Icon -->
+            <div class="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-6 text-emerald-green animate-pulse">
+                <i data-lucide="check-circle" class="w-12 h-12 stroke-[1.5]"></i>
+            </div>
+
+            <h1 id="success-title" class="text-3xl font-bold mb-4 text-deep-slate">
+                Оплата успішна!
+            </h1>
+            
+            <!-- Dynamic Order Info -->
+            <div class="mb-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100/80 text-left text-sm text-slate-600 inline-block w-full">
+                <div class="flex justify-between py-1.5 border-b border-slate-100">
+                    <span id="label-product">Продукт:</span>
+                    <span id="val-product" class="font-semibold text-deep-slate text-right ml-2">-</span>
+                </div>
+                <div class="flex justify-between py-1.5 mt-1">
+                    <span id="label-email">Email клієнта:</span>
+                    <span id="val-email" class="font-medium text-slate-500 text-right ml-2 break-all">-</span>
+                </div>
+            </div>
+
+            <p id="success-desc" class="text-slate-600 leading-relaxed mb-8 text-base text-left bg-white/60 p-5 rounded-2xl border border-slate-100/50">
+                Посилання на матеріали надіслано на вашу електронну адресу.
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-3.5">
+                <a href="https://t.me/+OH-Z61radLZiMGRi" target="_blank" id="btn-telegram" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span id="btn-tg-text">Приєднатися до Telegram</span>
+                </a>
+                
+                <button onclick="goHome()" id="btn-home" class="w-full bg-transparent border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium py-3.5 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span id="btn-home-text">На головну</span>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 border-t border-slate-200/60 bg-white/50 text-center text-xs text-slate-500">
+        <p>© 2026 LevelUp.Strategy. <span id="foot-copy">Всі права захищено.</span></p>
+    </footer>
+
+    <!-- Translations & Script -->
+    <script>
+        const TRANSLATIONS = {
+            ua: {
+                title: "Оплата успішна! | LevelUp.Strategy",
+                heading: "Оплата успішна!",
+                label_product: "Продукт:",
+                label_email: "Email клієнта:",
+                btn_tg: "Приєднатися до Telegram",
+                btn_home: "На головну",
+                foot_copy: "Всі права захищено.",
+                desc_inbox: "📧 Посилання на уроки міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вашу електронну адресу відразу після підтвердження оплати.<br/><br/>Будь ласка, перевірте поштову скриньку (включаючи папки <em>Спам</em> та <em>Промоакції</em>, якщо лист не надійшов).",
+                desc_sprint: "💡 Ваше місце в групі <strong>\"Нейро-Спринт\"</strong> заброньовано (сплачено завдаток 700 грн)!<br/><br/>Ми зв'яжемося з вами в Telegram або поштою для узгодження дати старту, коли набереться мінімальний склад.<br/><br/>Доступ до Міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вказану пошту.",
+                desc_default: "Дякуємо за оплату! Вся інформація та інструкції надіслані на вашу електронну пошту."
+            },
+            en: {
+                title: "Payment Successful! | LevelUp.Strategy",
+                heading: "Payment Successful!",
+                label_product: "Product:",
+                label_email: "Client Email:",
+                btn_tg: "Join Telegram Channel",
+                btn_home: "Back to Homepage",
+                foot_copy: "All rights reserved.",
+                desc_inbox: "📧 The link to the <strong>\"Digital Inbox\"</strong> mini-course lessons has been sent to your email address.<br/><br/>Please check your inbox (including <em>Spam</em> and <em>Promotions</em> folders if the email has not arrived).",
+                desc_sprint: "💡 Your spot in the <strong>\"Neuro-Sprint\"</strong> group is successfully reserved (700 UAH deposit paid)!<br/><br/>We will contact you via Telegram or email to agree on the start date once the minimum group is formed.<br/><br/>Access to the <strong>\"Digital Inbox\"</strong> Mini-course has already been sent to your email.",
+                desc_default: "Thank you for your payment! All information and instructions have been sent to your email."
+            },
+            fr: {
+                title: "Paiement Réussi ! | LevelUp.Strategy",
+                heading: "Paiement Réussi !",
+                label_product: "Produit :",
+                label_email: "E-mail du client :",
+                btn_tg: "Rejoindre Telegram",
+                btn_home: "Retour à l'accueil",
+                foot_copy: "Tous droits réservés.",
+                desc_inbox: "📧 Le lien vers les leçons du mini-cours <strong>« Digital Inbox »</strong> a été envoyé sur votre adresse e-mail.<br/><br/>Veuillez vérifier votre boîte de réception (y compris les dossiers <em>Spam</em> et <em>Promotions</em> si l'e-mail n'est pas arrivé).",
+                desc_sprint: "💡 Votre place dans le groupe <strong>« Neuro-Sprint »</strong> est réservée (acompte de 700 UAH réglé) !<br/><br/>Nous vous contacterons par Telegram ou e-mail pour convenir de la date de début dès que le groupe minimal sera constitué.<br/><br/>L'accès au Mini-cours <strong>« Digital Inbox »</strong> a déjà été envoyé par e-mail.",
+                desc_default: "Merci pour votre paiement ! Toutes les informations et instructions ont été envoyées sur votre adresse e-mail."
+            }
+        };
+
+        // State
+        let currentLanguage = localStorage.getItem('levelup_lang') || 'ua';
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('levelup_lang', lang);
+            updateUI();
+        }
+
+        function updateUI() {
+            const t = TRANSLATIONS[currentLanguage] || TRANSLATIONS.ua;
+            document.title = t.title;
+            document.getElementById('success-title').textContent = t.heading;
+            document.getElementById('label-product').textContent = t.label_product;
+            document.getElementById('label-email').textContent = t.label_email;
+            document.getElementById('btn-tg-text').textContent = t.btn_tg;
+            document.getElementById('btn-home-text').textContent = t.btn_home;
+            document.getElementById('foot-copy').textContent = t.foot_copy;
+
+            // Highlight active lang btn
+            ['ua', 'en', 'fr'].forEach(l => {
+                const btn = document.getElementById(`lang-btn-${l}`);
+                if (btn) {
+                    if (l === currentLanguage) {
+                        btn.className = "px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200 bg-emerald-green text-white";
+                    } else {
+                        btn.className = "px-2 sm:px-2.5 py-1 rounded-full transition-all duration-200 text-slate-600 hover:text-deep-slate bg-white/40";
+                    }
+                }
+            });
+
+            // Get product/tariff and set description
+            const product = sessionStorage.getItem('user_intent_tariff') || 'Цифровий Inbox';
+            const email = sessionStorage.getItem('pay_client_email') || '-';
+
+            document.getElementById('val-product').textContent = product;
+            document.getElementById('val-email').textContent = email;
+
+            const descEl = document.getElementById('success-desc');
+            if (product === 'Нейро-Спринт') {
+                descEl.innerHTML = t.desc_sprint;
+            } else if (product === 'Цифровий Inbox') {
+                descEl.innerHTML = t.desc_inbox;
+            } else {
+                descEl.innerHTML = t.desc_default;
+            }
+        }
+
+        function goHome() {
+            window.location.href = "index.html";
+        }
+
+        // Init page
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateUI();
+        });
+    </script>
+</body>
+</html>

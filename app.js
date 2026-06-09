@@ -93,7 +93,7 @@ const TRANSLATIONS = {
         card1_title: "Звільніть свій розум",
         card1_desc: "Ми створимо ваш \"Зовнішній мозок\". Простір, де ідеї не губляться, а префронтальна кора відпочиває від запам'ятовування.",
         card2_title: "Від мрій до кліків",
-        card2_desc: "Розбиваємо global цілі на мікро-кроки. Ваш мозок перестане вмикати опір і почне діяти автоматично.",
+        card2_desc: "Розбиваємо глобальні цілі на мікро-кроки. Ваш мозок перестане вмикати опір і почне діяти автоматично.",
         card3_title: "Стан потоку",
         card3_desc: "Налаштуємо графік за циркадними ритмами. Робіть важливе на піку енергії, а не коли доведеться.",
         card4_title: "Розумна дисципліна",
@@ -1361,6 +1361,20 @@ async function submitPayment(event) {
     }
 
     closePaymentModal();
+    
+    // --- ТЕСТОВИЙ РЕЖИМ (ІМІТАЦІЯ ОПЛАТИ ДЛЯ ТЕСТУВАННЯ) ---
+    if (email.includes("test")) {
+        setTimeout(() => {
+            if (currentPaymentTariff === "Цифровий Inbox" || currentPaymentTariff === "Нейро-Спринт") {
+                window.location.href = "success.html";
+            } else {
+                // Когнітивний Аудит / Архітектор Систем
+                window.location.href = window.location.pathname + "?status=success&product=audit";
+            }
+        }, 1000);
+        return;
+    }
+    // --------------------------------------------------------
     
     const paymentUrl = WAYFORPAY_LINKS[currentPaymentTariff];
     if (paymentUrl && paymentUrl.startsWith("http")) {
