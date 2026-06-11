@@ -108,90 +108,86 @@ function doPost(e) {
           }
         }
         
-        // г) Автовідправка вітального листа з Notion-мінікурсом
+        // г) Автовідправка вітального листа з Notion-мінікурсом (тільки для тарифів "Цифровий Inbox" та "Нейро-Спринт")
         try {
-          let subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
+          let subject = "";
           let htmlBody = "";
           
-          if (productName.indexOf("Цифровий Inbox") !== -1) {
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
+          // Захисна перевірка: якщо це аудит (ціна 2500 або назва містить ключові слова), пошту НЕ спамимо
+          const pNameLower = productName.toLowerCase();
+          const parsedAmount = parseFloat(amount);
+          const isAudit = (
+            (!isNaN(parsedAmount) && parsedAmount >= 2000) ||
+            pNameLower.indexOf("аудит") !== -1 ||
+            pNameLower.indexOf("audit") !== -1 ||
+            pNameLower.indexOf("когнітивний") !== -1 ||
+            pNameLower.indexOf("cognitive") !== -1 ||
+            pNameLower.indexOf("архітектор") !== -1 ||
+            pNameLower.indexOf("architect") !== -1 ||
+            pNameLower.indexOf("систем") !== -1 ||
+            pNameLower.indexOf("system") !== -1
+          );
+          
+          if (!isAudit) {
+            if (pNameLower.indexOf("цифровий inbox") !== -1) {
+              subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
+              htmlBody = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
+                    <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
+                  </div>
+                  
+                  <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
+                  <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
+                  <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                      👉 Отримати доступ в Notion
+                    </a>
+                  </div>
+                  
+                  <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                  <p style="font-size: 13px; color: #64748b;">Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.</p>
+                  <p style="font-size: 13px; color: #64748b; margin-top: 8px;">З повагою,<br/>Команда LevelUp.Strategy</p>
                 </div>
-                
-                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
-                <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    👉 Отримати доступ в Notion
-                  </a>
+              `;
+            } else if (pNameLower.indexOf("нейро-спринт") !== -1) {
+              subject = "Ваше місце заброньовано: Нейро-Спринт!";
+              htmlBody = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
+                    <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Групова практика та Нейро-Спринт</p>
+                  </div>
+                  
+                  <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
+                  <p>Дякуємо за оплату завдатку для участі у спринті <strong>Нейро-Спринт</strong>.</p>
+                  <p>Ваше місце в групі успішно заброньовано! Решту суми (<strong>4500 грн</strong>) ви сплатите після офіційного старту групи.</p>
+                  <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>:</p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                      👉 Отримати доступ до Міні-курсу в Notion
+                    </a>
+                  </div>
+                  
+                  <p style="font-size: 14px;">Ми зв'яжемося з вами, щойно буде сформовано склад групи для узгодження дати старту.</p>
+                  <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                  <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
                 </div>
-                
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                <p style="font-size: 13px; color: #64748b;">Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.</p>
-                <p style="font-size: 13px; color: #64748b; margin-top: 8px;">З повагою,<br/>Команда LevelUp.Strategy</p>
-              </div>
-            `;
-          } else if (productName.indexOf("Нейро-Спринт") !== -1) {
-            subject = "Ваше місце заброньовано: Нейро-Спринт!";
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Групова практика та Нейро-Спринт</p>
-                </div>
-                
-                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                <p>Дякуємо за оплату завдатку для участі у спринті <strong>Нейро-Спринт</strong>.</p>
-                <p>Ваше місце в групі успішно заброньовано! Решту суми (<strong>4500 грн</strong>) ви сплатите після офіційного старту групи.</p>
-                <p>А поки що ви можете почати ознайомлення з <strong>Міні-курсом Цифровий Inbox (Notion)</strong>:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    👉 Отримати доступ до Міні-курсу в Notion
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px;">Ми зв'яжемося з вами, щойно буде сформовано склад групи для узгодження дати старту.</p>
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
-              </div>
-            `;
-          } else {
-            subject = "Оплата підтверджена: Когнітивний Аудит";
-            htmlBody = `
-              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                  <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Когнітивний Аудит та Нейро-Продуктивність</p>
-                </div>
-                
-                <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                <p>Дякуємо за оплату послуги: <strong>${productName}</strong>.</p>
-                <p>Оплата пройшла успішно. Якщо ти ще не встиг обрати час для нашої діагностичної сесії у нашому календарі, будь ласка, зроби це за посиланням нижче:</p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://nadiiabielaia-create.github.io/second-brain-site/" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                    📅 Обрати час у Календарі
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px;">Після бронювання на твою пошту надійде запрошення з Google Meet посиланням для нашої зустрічі.</p>
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
-              </div>
-            `;
+              `;
+            }
           }
           
-          MailApp.sendEmail({
-            to: email,
-            subject: subject,
-            htmlBody: htmlBody
-          });
+          if (htmlBody) {
+            MailApp.sendEmail({
+              to: email,
+              subject: subject,
+              htmlBody: htmlBody
+            });
+          }
         } catch (mailErr) {
           Logger.log("Email error: " + mailErr.toString());
         }
@@ -201,31 +197,61 @@ function doPost(e) {
     }
     
     // 2. Стандартна логіка для бронювань та лідів з фронтенду
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Бронювання") || SpreadsheetApp.getActiveSpreadsheet().insertSheet("Бронювання");
     const action = data.action;
     const calendar = CalendarApp.getCalendarById(YOUR_EMAIL) || CalendarApp.getDefaultCalendar();
 
     // СКАСУВАННЯ БРОНЮВАННЯ
     if (action === "cancel") {
-      const now = new Date();
-      const searchStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-      const endSearch = new Date(now.getTime() + (31 * 24 * 60 * 60 * 1000));
-      const events = calendar.getEvents(searchStart, endSearch);
-      
       let deletedCount = 0;
-      events.forEach(event => {
-        const desc = event.getDescription();
-        if (desc && desc.indexOf(data.phone) !== -1) {
-          event.deleteEvent();
-          deletedCount++;
+
+      // Спочатку пробуємо видалити за eventId (найточніший спосіб)
+      if (data.eventId) {
+        try {
+          const eventById = calendar.getEventById(data.eventId);
+          if (eventById) {
+            eventById.deleteEvent();
+            deletedCount++;
+          }
+        } catch (idErr) {
+          Logger.log("Delete by eventId failed: " + idErr.toString());
         }
-      });
-      
+      }
+
+      // Якщо не вдалося за eventId — шукаємо за телефоном або часом слоту в описі
+      if (deletedCount === 0) {
+        const now = new Date();
+        const searchStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        const endSearch = new Date(now.getTime() + (31 * 24 * 60 * 60 * 1000));
+        const events = calendar.getEvents(searchStart, endSearch);
+
+        // Нормалізуємо телефон для порівняння (прибираємо нецифрові символи)
+        const normalizePhone = (p) => (p || '').replace(/\D/g, '');
+        const phoneNorm = normalizePhone(data.phone);
+
+        // Якщо передано slot — перевіряємо збіг часу
+        const slotTime = data.slot ? new Date(data.slot).getTime() : null;
+
+        events.forEach(event => {
+          const desc = event.getDescription() || '';
+          const startMs = event.getStartTime().getTime();
+
+          const phoneMatch = phoneNorm && normalizePhone(desc).indexOf(phoneNorm) !== -1;
+          const slotMatch = slotTime && Math.abs(startMs - slotTime) < 60000; // в межах 1 хвилини
+
+          if (phoneMatch || slotMatch) {
+            event.deleteEvent();
+            deletedCount++;
+          }
+        });
+      }
+
       return ContentService.createTextOutput(JSON.stringify({ 
         status: "success", 
         message: "Скасовано подій: " + deletedCount 
       })).setMimeType(ContentService.MimeType.JSON);
     }
+
 
     // ЗАПИС ЛІДА З МОДАЛЬНОГО ВІКНА
     if (action === "lead") {
@@ -249,10 +275,11 @@ function doPost(e) {
     const email = data.email || "Не вказано";
     const slot = new Date(data.slot);
 
-    // НАДІЙНА Валідація робочих годин (09:00 - 19:00 за Парижем) та вихідних днів
-    const parisHour = parseInt(Utilities.formatDate(slot, "Europe/Paris", "HH"));
-    const parisDay = Utilities.formatDate(slot, "Europe/Paris", "E"); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-    const isWeekend = (parisDay === "Sat" || parisDay === "Sun");
+    // НАДІЙНА Валідація робочих годин (09:00 - 19:00 за часовим поясом календаря) та вихідних днів
+    const calendarTimeZone = calendar.getTimeZone();
+    const localHour = parseInt(Utilities.formatDate(slot, calendarTimeZone, "HH"));
+    const localDay = Utilities.formatDate(slot, calendarTimeZone, "E"); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+    const isWeekend = (localDay === "Sat" || localDay === "Sun");
 
     if (isWeekend) {
       return ContentService.createTextOutput(JSON.stringify({ 
@@ -261,14 +288,29 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (parisHour < WORK_START_HOUR || parisHour >= WORK_END_HOUR) {
+    if (localHour < WORK_START_HOUR || localHour >= WORK_END_HOUR) {
       return ContentService.createTextOutput(JSON.stringify({ 
         status: "error", 
-        message: "Бронювання можливе тільки в робочий час з 09:00 до 19:00 за Парижем." 
+        message: "Бронювання можливе тільки в робочий час з 09:00 до 19:00 за часовим поясом вашого календаря (" + calendarTimeZone + ")." 
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
     const scores = data.quizScores;
+    
+    const endTime = new Date(slot);
+    endTime.setMinutes(endTime.getMinutes() + 60);
+    
+    // Захист від накладення подій (якщо два користувачі надіслали запит одночасно)
+    const checkStart = new Date(slot.getTime() + 1000);
+    const checkEnd = new Date(endTime.getTime() - 1000);
+    const overlappingEvents = calendar.getEvents(checkStart, checkEnd);
+    const hasOverlappingTimeEvent = overlappingEvents.some(ev => !ev.isAllDayEvent());
+    if (hasOverlappingTimeEvent) {
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "error", 
+        message: "На жаль, цей час вже було заброньовано іншим користувачем. Будь ласка, оберіть інший вільний слот." 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
     // Запис у Google Таблицю
     if (sheet.getLastRow() === 0) {
@@ -279,10 +321,6 @@ function doPost(e) {
     sheet.appendRow([
       new Date(), name, phone, email, slot, tariff, scores.load, scores.focus, scores.system
     ]);
-    
-    // Створення події
-    const endTime = new Date(slot);
-    endTime.setMinutes(endTime.getMinutes() + 30);
     
     const description = `Стратегічний розбір: ${name}
 Телефон: ${phone}
@@ -312,6 +350,30 @@ Email: ${email}
 function doGet(e) {
   try {
     const action = e.parameter.action;
+    
+    if (action === "diagnoseTimezones") {
+      const calendar = CalendarApp.getCalendarById(YOUR_EMAIL) || CalendarApp.getDefaultCalendar();
+      const testDate = new Date("2026-06-12T06:00:00.000Z");
+      const result = {
+        status: "success",
+        scriptTimeZone: Session.getScriptTimeZone(),
+        spreadsheetTimeZone: SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(),
+        calendarTimeZone: calendar.getTimeZone(),
+        testDateRaw: testDate.toString(),
+        testDateLocalHours: testDate.getHours(),
+        testDateUtcHours: testDate.getUTCHours(),
+        formattedDateKyiv: Utilities.formatDate(testDate, "Europe/Kiev", "yyyy-MM-dd HH:mm:ss"),
+        formattedDateParis: Utilities.formatDate(testDate, "Europe/Paris", "yyyy-MM-dd HH:mm:ss"),
+        formattedDateScript: Utilities.formatDate(testDate, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss")
+      };
+      const callback = e.parameter.callback;
+      if (callback) {
+        return ContentService.createTextOutput(callback + '(' + JSON.stringify(result) + ')')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     
     // Генерація підпису для WayForPay
     if (action === "getSignature") {
@@ -368,17 +430,24 @@ function doGet(e) {
     
     const events = calendar.getEvents(start, end);
     
-    // Отримуємо таймстемпи (мілісекунди) зайнятих слотів
-    const busySlots = events.map(ev => ({
-      start: ev.getStartTime().getTime(),
-      end: ev.getEndTime().getTime()
-    }));
+    // Отримуємо таймстемпи (мілісекунди) зайнятих слотів, ігноруючи цілодні події (all-day events)
+    const busySlots = [];
+    events.forEach(ev => {
+      if (!ev.isAllDayEvent()) {
+        busySlots.push({
+          start: ev.getStartTime().getTime(),
+          end: ev.getEndTime().getTime()
+        });
+      }
+    });
     
     const result = { 
       status: "success", 
       busySlots: busySlots,
       calendarName: calendar.getName(),
-      calendarId: calendar.getId()
+      calendarId: calendar.getId(),
+      calendarTimeZone: calendar.getTimeZone(),
+      scriptTimeZone: Session.getScriptTimeZone()
     };
     
     // JSONP для обходу CORS

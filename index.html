@@ -53,6 +53,40 @@
 </head>
 <body class="bg-warm-sand text-deep-slate font-sans antialiased neural-bg min-h-screen flex flex-col">
 
+    <!-- On-screen Debug Console for Diagnostics -->
+    <div id="onscreen-debug" class="fixed bottom-0 left-0 right-0 bg-red-950/95 text-white p-4 font-mono text-xs z-[9999] max-h-48 overflow-y-auto hidden">
+        <div class="flex justify-between items-center border-b border-red-700/50 pb-2 mb-2">
+            <span class="font-bold text-red-400">🖥️ ДІАГНОСТИКА БРАУЗЕРА (Console Errors)</span>
+            <button onclick="document.getElementById('onscreen-debug').style.display='none'" class="bg-red-800 px-2.5 py-1 rounded hover:bg-red-700 text-[10px] font-bold uppercase transition-colors">Закрити</button>
+        </div>
+        <div id="debug-log-output" class="space-y-1"></div>
+    </div>
+    <script>
+        (function() {
+            const logOutput = document.getElementById('debug-log-output');
+            function logToScreen(type, msg) {
+                const el = document.createElement('div');
+                el.className = 'py-1 border-b border-red-900/30 break-all';
+                el.innerHTML = `<span class="text-red-400 font-bold">[${type}]</span> ${msg}`;
+                logOutput.appendChild(el);
+                document.getElementById('onscreen-debug').style.display = 'block';
+            }
+            window.onerror = function(message, source, lineno, colno, error) {
+                logToScreen('ERROR', message + ' at ' + (source ? source.split('/').pop() : 'unknown') + ':' + lineno);
+                return false;
+            };
+            window.onunhandledrejection = function(event) {
+                logToScreen('PROMISE_REJECT', event.reason || 'Unhandled Promise Rejection');
+            };
+            const originalConsoleError = console.error;
+            console.error = function() {
+                const args = Array.from(arguments).map(x => typeof x === 'object' ? JSON.stringify(x) : String(x));
+                logToScreen('CONSOLE_ERROR', args.join(' '));
+                originalConsoleError.apply(console, arguments);
+            };
+        })();
+    </script>
+
     <!-- Header -->
     <header class="sticky top-0 z-50 glass-header px-6 py-4 flex justify-between items-center transition-all duration-300">
         <div class="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" onclick="goToStep(1)">
@@ -286,7 +320,6 @@
 
         <!-- STEP 5: Calendar Booking -->
         <section id="step-5" class="w-full max-w-5xl hidden flex-col items-center animate-fade-in pb-12">
-            <!-- Кнопка повернення до тарифів -->
             <button type="button" onclick="goToStep(4)" class="self-start mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition duration-150 group cursor-pointer">
                 <span>←</span> <span class="group-hover:underline" data-i18n="cal_back">Повернутися до тарифів та форматів</span>
             </button>
@@ -296,94 +329,80 @@
                 <p id="calendar-instruction" class="text-slate-600 text-lg">Миттєве бронювання стратегічного розбору</p>
             </div>
 
-            <div class="flex flex-col lg:flex-row gap-8 w-full">
-                <!-- Calendar Grid -->
+            <!-- TWO-COLUMN LAYOUT (shown when no active booking) -->
+            <div id="calendar-grid-wrapper" class="flex flex-col lg:flex-row gap-8 w-full">
+                <!-- Calendar Grid (left) -->
                 <div class="w-full lg:w-2/3 bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
                     <div class="flex justify-between items-center mb-6">
                         <button onclick="changeWeek(-1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="chevron-left"></i></button>
-                        <h3 id="calendar-month" class="text-xl font-bold text-deep-slate">Листопад 2026</h3>
+                        <h3 id="calendar-month" class="text-xl font-bold text-deep-slate">Червень 2026</h3>
                         <button onclick="changeWeek(1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="chevron-right"></i></button>
                     </div>
-                    
-                    <!-- Days Header -->
-                    <div id="calendar-days-header" class="grid grid-cols-5 gap-2 mb-4 text-center text-sm font-semibold text-slate-500">
-                        <!-- Populated by JS -->
-                    </div>
-
-                    <!-- Slots Grid -->
-                    <div id="calendar-slots" class="grid grid-cols-5 gap-2 min-h-[300px]">
-                        <!-- Populated by JS -->
-                    </div>
-                    
-                    <!-- Loader -->
-                    <div id="calendar-loader" class="hidden flex-col items-center justify-center py-10">
+                    <div id="calendar-days-header" class="grid grid-cols-5 gap-2 mb-4 text-center text-sm font-semibold text-slate-500"></div>
+                    <div id="calendar-slots" class="grid grid-cols-5 gap-2 min-h-[300px]"></div>
+                    <div id="calendar-loader" style="display:none;" class="flex flex-col items-center justify-center py-10">
                         <i data-lucide="loader-2" class="animate-spin text-emerald-green w-8 h-8 mb-2"></i>
                         <span class="text-sm text-slate-500" data-i18n="cal_sync_label">Синхронізація розкладу...</span>
                     </div>
                 </div>
 
-                <!-- Booking Form -->
+                <!-- Booking Form (right) -->
                 <div class="w-full lg:w-1/3">
                     <div class="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 sticky top-24">
-                        <div id="booking-container">
-                            <div id="selected-slot-info" class="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
-                                <p class="text-sm text-slate-500 mb-1" data-i18n="succ_time_prefix">Обраний час:</p>
-                                <p id="selected-slot-text" class="font-bold text-lg text-emerald-green"></p>
-                            </div>
-
-                            <form id="booking-form" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_pib">ПІБ *</label>
-                                    <input type="text" id="b-name" required pattern="[a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]+" title="Будь ласка, використовуйте тільки літери" oninput="this.value = this.value.replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ'\-\s]/g, '')" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="Ваше ім'я">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_phone">Телефон *</label>
-                                    <input type="tel" id="b-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_email">Email</label>
-                                    <input type="email" id="b-email" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="name@example.com">
-                                </div>
-                                <button type="submit" id="btn-submit-booking" class="w-full bg-deep-slate text-white font-semibold py-4 rounded-full mt-4 hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2" data-i18n="cal_form_btn">
-                                    Підтвердити бронювання
-                                </button>
-                            </form>
+                        <div id="selected-slot-info" class="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 hidden">
+                            <p class="text-sm text-slate-500 mb-1" data-i18n="succ_time_prefix">Обраний час:</p>
+                            <p id="selected-slot-text" class="font-bold text-lg text-emerald-green"></p>
                         </div>
+                        <form id="booking-form" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_pib">ПІБ *</label>
+                                <input type="text" id="b-name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="Ваше ім'я">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_phone">Телефон *</label>
+                                <input type="tel" id="b-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" data-i18n="cal_form_email">Email</label>
+                                <input type="email" id="b-email" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-green focus:ring-2 focus:ring-emerald-green/20 outline-none transition-all" placeholder="name@example.com">
+                            </div>
+                            <button type="submit" id="btn-submit-booking" class="w-full bg-deep-slate text-white font-semibold py-4 rounded-full mt-4 hover:bg-slate-800 transition-all active:scale-95 flex justify-center items-center gap-2" data-i18n="cal_form_btn">
+                                Підтвердити бронювання
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- END TWO-COLUMN LAYOUT -->
 
-                        <!-- Success Panel -->
-                        <div id="booking-success" class="hidden flex-col items-center text-center py-4">
-                            <div class="w-16 h-16 bg-emerald-100 text-emerald-green rounded-full flex items-center justify-center mb-4">
-                                <i data-lucide="calendar-check-2" class="w-8 h-8"></i>
-                            </div>
-                            <h3 class="text-xl font-bold mb-2" data-i18n="succ_header">Заброньовано!</h3>
-                            <div class="mb-4 p-3 bg-white rounded-xl border border-emerald-100 shadow-sm w-full">
-                                <p class="text-xs text-slate-500 mb-1" data-i18n="succ_time_prefix">Ваш обраний час:</p>
-                                <p id="success-booked-time" class="font-bold text-emerald-green"></p>
-                            </div>
-                            <p class="text-sm text-slate-500 mb-6" data-i18n="succ_next_question">Куди бажаєте перейти далі?</p>
-                            
-                            <div class="space-y-3 w-full">
-                                <button onclick="goToStep(3)" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_profile">
-                                    Мій Нейро-Профіль
-                                </button>
-                                <button onclick="goToStep(4)" class="w-full border border-slate-300 text-slate-700 hover:border-emerald-green hover:text-emerald-green font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_tariffs">
-                                    Тарифи
-                                </button>
-                                <button onclick="goToStep(1)" class="w-full text-slate-500 hover:text-slate-800 text-sm font-medium py-2 transition-all" data-i18n="succ_btn_main">
-                                    На головну
-                                </button>
-                                
-                                <div class="pt-4 mt-4 border-t border-slate-100">
-                                    <button onclick="cancelBooking()" class="w-full text-red-500 hover:text-red-700 text-sm font-medium py-2 transition-all border border-red-100 hover:bg-red-50 rounded-full" data-i18n="succ_btn_cancel">
-                                        Скасувати або змінити час
-                                    </button>
-                                </div>
-                            </div>
+            <!-- SUCCESS PANEL: sibling of calendar-grid-wrapper, shown when booking exists -->
+            <div id="booking-success" style="display:none;" class="w-full flex justify-center">
+                <div class="bg-white p-8 sm:p-10 rounded-[32px] shadow-xl border border-slate-100 w-full max-w-md text-center">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-green rounded-full flex items-center justify-center mb-5 mx-auto">
+                        <i data-lucide="calendar-check-2" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3" data-i18n="succ_header">Заброньовано!</h3>
+                    <div class="mb-5 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                        <p class="text-xs text-slate-500 mb-1" data-i18n="succ_time_prefix">Ваш обраний час:</p>
+                        <p id="success-booked-time" class="font-bold text-lg text-emerald-green"></p>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6" data-i18n="succ_next_question">Куди бажаєте перейти далі?</p>
+                    <div class="space-y-3">
+                        <button onclick="goToStep(3)" class="w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_profile">Мій Нейро-Профіль</button>
+                        <button onclick="goToStep(4)" class="w-full border border-slate-300 text-slate-700 hover:border-emerald-green hover:text-emerald-green font-semibold py-3 rounded-full transition-all" data-i18n="succ_btn_tariffs">Тарифи</button>
+                        <button onclick="goToStep(1)" class="w-full text-slate-500 hover:text-slate-800 text-sm font-medium py-2 transition-all" data-i18n="succ_btn_main">На головну</button>
+                        <div class="pt-4 mt-2 border-t border-slate-100">
+                            <button onclick="cancelBooking()" class="w-full text-red-500 hover:text-red-700 text-sm font-medium py-2 transition-all border border-red-100 hover:bg-red-50 rounded-full" data-i18n="succ_btn_cancel">
+                                Скасувати або змінити час
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- END SUCCESS PANEL -->
+
         </section>
+
 
     </main>
 
@@ -514,6 +533,6 @@
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
 
     <!-- App Logic -->
-    <script src="app.js"></script>
+    <script src="app.js?v=3.5"></script>
 </body>
 </html>

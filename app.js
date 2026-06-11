@@ -1,5 +1,9 @@
 // Initialize Lucide icons
-lucide.createIcons();
+try {
+    lucide.createIcons();
+} catch (e) {
+    console.warn("Initial Lucide load warning:", e);
+}
 
 // Init Intl Tel Input
 let iti;
@@ -408,7 +412,7 @@ const QUIZ_TRANSLATIONS = {
             question: "Comment stockez-vous généralement les nouvelles idées ou informations importantes ?",
             options: [
                 "J'essaie de les garder en tête (et je les oublie souvent).",
-                "Je les note dans plein de carnets, d'applications ou de chats différents.",
+                "Je le note dans plein de carnets, d'applications ou de chats différents.",
                 "J'ai un système de capture unique selon votre méthode."
             ]
         },
@@ -475,7 +479,7 @@ const PROFILES_TRANSLATIONS = {
         overload_desc: "Votre cerveau dépense trop d'énergie à stocker des informations et à lutter contre les distractions. Il faut d'urgence décharger votre mémoire et adopter un « Second Cerveau ».",
         distraction_badge: "Déficit de Focus",
         distraction_title: "Le potentiel se perd dans la routine",
-        distraction_desc: "Vous essayez de tout faire, mais travaillez souvent en mode réactif. Nous devons mettre en place des blocs de travail profond et synchroniser votre emploi du temps avec vos rythmes circadiens.",
+        distraction_desc: "Vous devez mettre en place des blocs de travail profond et synchroniser votre emploi du temps avec vos rythmes circadiens.",
         chart_label: "Votre niveau actuel",
         chart_labels: ['Résilience', 'Focus', 'Système']
     }
@@ -503,7 +507,8 @@ const CALENDAR_TRANSLATIONS = {
         payment_error_phone: "Будь ласка, введіть повністю коректний номер телефону.",
         payment_error_gdpr: "Необхідно погодитися з умовами публічної оферти.",
         payment_success_notif: "Оплата успішна! Будь ласка, оберіть час для вашої сесії в календарі.",
-        payment_error_not_configured: "Помилка: Посилання на оплату для цього тарифу ще не налаштоване."
+        payment_error_not_configured: "Помилка: Посилання на оплату для цього тарифу ще не налаштоване.",
+        my_booking_label: "✅ Ваше бронювання"
     },
     en: {
         time_selected: "Booking review for format: ",
@@ -526,7 +531,8 @@ const CALENDAR_TRANSLATIONS = {
         payment_error_phone: "Please enter a fully correct phone number.",
         payment_error_gdpr: "You must agree to the terms of the public offer.",
         payment_success_notif: "Payment successful! Please choose a time for your session in the calendar.",
-        payment_error_not_configured: "Error: Payment link for this tariff is not configured yet."
+        payment_error_not_configured: "Error: Payment link for this tariff is not configured yet.",
+        my_booking_label: "✅ Your booking"
     },
     fr: {
         time_selected: "Réservation du débriefing pour le format : ",
@@ -549,7 +555,8 @@ const CALENDAR_TRANSLATIONS = {
         payment_error_phone: "Veuillez entrer un numéro de téléphone entièrement correct.",
         payment_error_gdpr: "Vous devez accepter les conditions de l'offre publique.",
         payment_success_notif: "Paiement réussi ! Veuillez choisir un horaire pour votre séance dans le calendrier.",
-        payment_error_not_configured: "Erreur : Le lien de paiement pour ce tarif n'est pas encore configuré."
+        payment_error_not_configured: "Erreur : Le lien de paiement pour ce tarif n'est pas encore configuré.",
+        my_booking_label: "✅ Votre réservation"
     }
 };
 
@@ -827,35 +834,50 @@ function renderResults() {
 }
 
 // --- CALENDAR & BOOKING LOGIC ---
-const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzv1l6RiL9zB_enLZjyna96j88UqnoHpcqmVzTV-FpWpG2Mbj-uWI03P7bN2MNFSffHZQ/exec";
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzGBvTV0rnshMGmODoeXwiI4gKC-A_IOnkZ9fOC3ZLUvIpXnfmhGSj9VmWOGExtp87zgQ/exec";
 let currentWeekOffset = 0;
 let selectedSlot = null;
 let busySlots = [];
+let calendarTimeZone = "Europe/Kiev";
+let loadStatus = { success: null, message: 'Завантаження...', error: null };
 
 function showSuccessPanel(bookingData) {
-    document.getElementById('booking-container').classList.add('hidden');
-    document.getElementById('booking-success').classList.remove('hidden');
-    document.getElementById('booking-success').classList.add('flex');
-    
-    if(bookingData && bookingData.slot) {
+    // Hide the two-column calendar layout
+    const gridWrapper = document.getElementById('calendar-grid-wrapper');
+    if (gridWrapper) gridWrapper.style.display = 'none';
+
+    // Show the standalone success panel (sibling of grid wrapper)
+    const successEl = document.getElementById('booking-success');
+    if (successEl) successEl.style.display = 'flex';
+
+    if (bookingData && bookingData.slot) {
         const d = new Date(bookingData.slot);
-        const options = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+        const options = { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         const localeMap = { ua: 'uk-UA', en: 'en-US', fr: 'fr-FR' };
-        document.getElementById('success-booked-time').textContent = d.toLocaleDateString(localeMap[currentLanguage] || 'uk-UA', options);
+        const el = document.getElementById('success-booked-time');
+        if (el) el.textContent = d.toLocaleDateString(localeMap[currentLanguage] || 'uk-UA', options);
+    }
+
+    if (window.lucide) {
+        try {
+            lucide.createIcons();
+        } catch(e) {}
     }
 }
 
 function initCalendar() {
     currentWeekOffset = 0;
     const t = CALENDAR_TRANSLATIONS[currentLanguage] || CALENDAR_TRANSLATIONS['ua'];
-    
+
     const existing = localStorage.getItem('levelup_booking');
     if (existing) {
         showSuccessPanel(JSON.parse(existing));
     } else {
-        document.getElementById('booking-container').classList.remove('hidden');
-        document.getElementById('booking-success').classList.add('hidden');
-        document.getElementById('booking-success').classList.remove('flex');
+        // Show full two-column layout
+        const gridWrapper = document.getElementById('calendar-grid-wrapper');
+        if (gridWrapper) gridWrapper.style.display = '';
+        const successEl = document.getElementById('booking-success');
+        if (successEl) successEl.style.display = 'none';
     }
 
     const chosenTariff = sessionStorage.getItem('user_intent_tariff');
@@ -880,19 +902,92 @@ function initCalendar() {
     loadWeek();
 }
 
-function cancelBooking() {
+async function cancelBooking() {
     const t = CALENDAR_TRANSLATIONS[currentLanguage] || CALENDAR_TRANSLATIONS['ua'];
-    if(confirm(t.cancel_booking_confirm)) {
+    const existing = localStorage.getItem('levelup_booking');
+    if (!existing) return;
+
+    const confirmMsg = {
+        ua: "Скасувати бронювання та обрати інший час?",
+        en: "Cancel booking and choose a different time?",
+        fr: "Annuler la réservation et choisir un autre horaire ?"
+    };
+    if (!confirm(confirmMsg[currentLanguage] || confirmMsg['ua'])) return;
+
+    const bookingData = JSON.parse(existing);
+
+    // Show loading spinner on cancel button
+    const cancelBtn = document.querySelector('[onclick="cancelBooking()"]');
+    const originalBtnText = cancelBtn ? cancelBtn.innerHTML : '';
+    if (cancelBtn) {
+        cancelBtn.disabled = true;
+        cancelBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-1"></i> Скасування...';
+        if (window.lucide) {
+            try {
+                lucide.createIcons();
+            } catch(e) {}
+        }
+    }
+
+    let serverCancelled = false;
+    let serverMessage = '';
+
+    // Call server to delete Google Calendar event
+    if (WEBHOOK_URL.startsWith("http")) {
+        try {
+            const response = await fetch(WEBHOOK_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "cancel",
+                    phone: bookingData.phone || '',
+                    eventId: bookingData.eventId || '',
+                    slot: bookingData.slot || ''
+                })
+            });
+            if (response.ok) {
+                const result = await response.json();
+                serverCancelled = true;
+                serverMessage = result.message || '';
+            } else {
+                console.warn('Cancel request returned status:', response.status);
+                // Still allow local cancellation if server fails
+                serverCancelled = true;
+            }
+        } catch (err) {
+            console.error("Error cancelling booking on server:", err);
+            // Still allow local cancellation so client is not stuck
+            serverCancelled = true;
+        }
+    } else {
+        serverCancelled = true;
+    }
+
+    if (cancelBtn) {
+        cancelBtn.disabled = false;
+        cancelBtn.innerHTML = originalBtnText;
+    }
+
+    if (serverCancelled) {
+        // Clear local booking state
         localStorage.removeItem('levelup_booking');
-        
-        document.getElementById('booking-container').classList.remove('hidden');
-        document.getElementById('booking-success').classList.add('hidden');
-        document.getElementById('booking-success').classList.remove('flex');
-        
         selectedSlot = null;
-        renderCalendarUI();
-        
-        showAtomicNotification(t.cancel_booking_notif);
+
+        // Restore full two-column layout (calendar + form)
+        const gridWrapper = document.getElementById('calendar-grid-wrapper');
+        if (gridWrapper) gridWrapper.style.display = '';
+        const successEl = document.getElementById('booking-success');
+        if (successEl) successEl.style.display = 'none';
+
+
+        const cancelNotif = {
+            ua: 'Бронювання скасовано. Оберіть новий зручний час.',
+            en: 'Booking cancelled. Please choose a new time.',
+            fr: 'Réservation annulée. Veuillez choisir un nouvel horaire.'
+        };
+        showAtomicNotification(cancelNotif[currentLanguage] || cancelNotif['ua']);
+
+        // Reload calendar from server so freed slot appears as available
+        await loadWeek();
     }
 }
 
@@ -902,6 +997,7 @@ function changeWeek(offset) {
 }
 
 async function loadWeek() {
+    loadStatus = { success: null, message: 'Синхронізація розкладу...', error: null };
     renderCalendarUI();
     document.getElementById('calendar-loader').style.display = 'flex';
     
@@ -909,50 +1005,30 @@ async function loadWeek() {
     
     try {
         if (WEBHOOK_URL.startsWith("http")) {
-            await new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                const callbackName = 'jsonpCallback_' + Math.round(100000 * Math.random());
-                
-                const timeoutId = setTimeout(() => {
-                    cleanup();
-                    showAtomicNotification("Timeout. Offline mode...", false);
-                    resolve(); 
-                }, 5000);
-
-                window[callbackName] = function(data) {
-                    clearTimeout(timeoutId);
-                    if (data.status === "success") {
-                        busySlots = data.busySlots || [];
-                    } else {
-                        showAtomicNotification("Error: " + data.message, false);
-                    }
-                    cleanup();
-                    resolve();
-                };
-                
-                const cleanup = () => {
-                    delete window[callbackName];
-                    if (document.body.contains(script)) {
-                        document.body.removeChild(script);
-                    }
-                };
-                
-                script.src = `${WEBHOOK_URL}?action=getSlots&callback=${callbackName}&t=${new Date().getTime()}`;
-                
-                script.onerror = function() {
-                    clearTimeout(timeoutId);
-                    cleanup();
-                    resolve(); 
-                };
-                
-                document.body.appendChild(script);
-            });
+            // Use standard fetch instead of JSONP to avoid multi-login Google redirect issues and incognito blocks
+            const response = await fetch(`${WEBHOOK_URL}?action=getSlots&t=${new Date().getTime()}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data.status === "success") {
+                busySlots = data.busySlots || [];
+                calendarTimeZone = data.calendarTimeZone || "Europe/Kiev";
+                loadStatus = { success: true, message: 'Синхронізовано', error: null };
+            } else {
+                const errMsg = data.message || "Unknown error";
+                showAtomicNotification("Error: " + errMsg, false);
+                loadStatus = { success: false, message: 'Помилка сервера', error: errMsg };
+            }
         } else {
             await new Promise(r => setTimeout(r, 600));
             busySlots = [];
+            loadStatus = { success: true, message: 'Офлайн (тестовий режим)', error: null };
         }
     } catch (e) {
-        console.error(e);
+        console.error("Failed to load calendar slots:", e);
+        showAtomicNotification(t.busy_sync_label || "Error loading schedule...", false);
+        loadStatus = { success: false, message: 'Помилка мережі/CORS', error: e.message || String(e) };
     }
 
     document.getElementById('calendar-loader').style.display = 'none';
@@ -999,16 +1075,16 @@ function renderCalendarUI() {
         const now = new Date();
 
         for (let h = 0; h < 24; h++) {
-            ['00', '30'].forEach(min => {
+            ['00'].forEach(min => {
                 const slotTime = new Date(date);
                 slotTime.setHours(h, parseInt(min), 0, 0);
 
                 if (slotTime > now) {
-                    const parisHour = parseInt(slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", hour: "numeric", hour12: false}));
-                    const parisDay = slotTime.toLocaleString("en-US", {timeZone: "Europe/Paris", weekday: "short"}); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+                    const targetHour = parseInt(slotTime.toLocaleString("en-US", {timeZone: calendarTimeZone, hour: "numeric", hour12: false}));
+                    const targetDay = slotTime.toLocaleString("en-US", {timeZone: calendarTimeZone, weekday: "short"}); // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
                     
-                    if (parisDay === "Sat" || parisDay === "Sun") return;
-                    if (parisHour < 9 || parisHour >= 19) return;
+                    if (targetDay === "Sat" || targetDay === "Sun") return;
+                    if (targetHour < 9 || targetHour >= 19) return;
                     
                     const localHour = String(slotTime.getHours()).padStart(2, '0');
                     const localMin = String(slotTime.getMinutes()).padStart(2, '0');
@@ -1019,7 +1095,33 @@ function renderCalendarUI() {
                         return (slotMs >= busy.start - 60000) && (slotMs < busy.end - 60000);
                     });
 
+                    // Check if this slot is the client's own active booking (stored locally)
+                    const existingBooking = localStorage.getItem('levelup_booking');
+                    let isMyBooking = false;
+                    if (existingBooking) {
+                        try {
+                            const bd = JSON.parse(existingBooking);
+                            if (bd.slot) {
+                                const bookedMs = new Date(bd.slot).getTime();
+                                isMyBooking = Math.abs(slotTime.getTime() - bookedMs) < 60000;
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (isMyBooking) {
+                        // Render as "your booking" — teal, with calendar-check icon, disabled
+                        const myBtn = document.createElement('button');
+                        myBtn.type = 'button';
+                        myBtn.className = "w-full py-2 text-sm rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 cursor-not-allowed flex items-center justify-center gap-1 font-semibold transition-all";
+                        myBtn.disabled = true;
+                        myBtn.title = t.my_booking_label || "Ваше бронювання";
+                        myBtn.innerHTML = `<i data-lucide="calendar-check-2" class="w-3.5 h-3.5 text-emerald-500"></i> ${timeStr}`;
+                        col.appendChild(myBtn);
+                        return;
+                    }
+
                     if (isBusy) {
+
                         const disabledBtn = document.createElement('button');
                         disabledBtn.type = 'button';
                         disabledBtn.className = "w-full py-2 text-sm rounded-lg border border-slate-100 bg-slate-100 text-slate-400 cursor-not-allowed flex items-center justify-center gap-1 font-medium transition-all";
@@ -1052,12 +1154,28 @@ function renderCalendarUI() {
     if (!debugEl) {
         debugEl = document.createElement('div');
         debugEl.id = 'debug-info';
-        debugEl.className = 'col-span-full text-xs text-slate-400 mt-4 text-center';
+        debugEl.className = 'col-span-full text-xs text-slate-400 mt-4 text-center leading-relaxed';
         slotsContainer.appendChild(debugEl);
     }
-    debugEl.textContent = `${t.busy_slots_debug}${busySlots.length}`;
+    
+    let debugText = `Версія скрипту: <strong>3.5 (Нова)</strong><br>`;
+    debugText += `URL запиту: <span class="select-all font-mono text-[10px] bg-slate-50 px-1 py-0.5 rounded border border-slate-100">${WEBHOOK_URL}</span><br>`;
+    if (loadStatus.success === true) {
+        debugText += `<span class="text-emerald-600 font-semibold">🟢 ${loadStatus.message}</span>. Знайдено зайнятих подій: <strong>${busySlots.length}</strong>`;
+    } else if (loadStatus.success === false) {
+        debugText += `<span class="text-red-500 font-semibold">🔴 Помилка:</span> ${loadStatus.error}`;
+    } else {
+        debugText += `<span class="text-amber-500 font-semibold">🟡 ${loadStatus.message}</span>`;
+    }
+    debugEl.innerHTML = debugText;
 
-    lucide.createIcons();
+    if (window.lucide) {
+        try {
+            lucide.createIcons();
+        } catch(err) {
+            console.warn("Lucide error:", err);
+        }
+    }
 }
 
 function selectSlot(dateObj) {
@@ -1079,7 +1197,15 @@ function selectSlot(dateObj) {
 
 document.getElementById('booking-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!selectedSlot) return;
+    if (!selectedSlot) {
+        const selectTimeMsg = {
+            ua: "Будь ласка, спочатку оберіть зручний час у календарі ліворуч.",
+            en: "Please select a convenient time in the calendar on the left first.",
+            fr: "Veuillez d'abord choisir un horaire dans le calendrier à gauche."
+        };
+        showAtomicNotification(selectTimeMsg[currentLanguage] || selectTimeMsg['ua'], false);
+        return;
+    }
 
     const t = CALENDAR_TRANSLATIONS[currentLanguage] || CALENDAR_TRANSLATIONS['ua'];
 
@@ -1114,26 +1240,68 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
         quizScores: scores
     };
 
-    localStorage.setItem('levelup_booking', JSON.stringify(payload));
+    // Показати стан завантаження
+    const submitBtn = document.getElementById('btn-submit-booking');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-2"></i> ${t.busy_sync_label || "Синхронізація..."}`;
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+
+    let success = true;
+    let errorMessage = "";
+    let serverEventId = '';
+    if (WEBHOOK_URL.startsWith("http")) {
+        try {
+            // Use standard CORS fetch (without application/json headers to make it a simple request and avoid preflight OPTIONS blocks)
+            const response = await fetch(WEBHOOK_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.status !== "success") {
+                success = false;
+                errorMessage = data.message || "Server error";
+            } else {
+                // Save eventId for later cancellation
+                serverEventId = data.eventId || '';
+            }
+        } catch (err) {
+            console.error("Sync error", err);
+            success = false;
+            errorMessage = err.message || "Connection error";
+        }
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+
+    if (!success) {
+        const errorMsg = {
+            ua: `Помилка: ${errorMessage}`,
+            en: `Error: ${errorMessage}`,
+            fr: `Erreur: ${errorMessage}`
+        };
+        showAtomicNotification(errorMsg[currentLanguage] || errorMsg['ua'], false);
+        return;
+    }
+
+    // Save booking to localStorage including eventId for reliable cancellation
+    const bookingToSave = Object.assign({}, payload, { eventId: serverEventId });
+    localStorage.setItem('levelup_booking', JSON.stringify(bookingToSave));
     showAtomicNotification(t.booked_success_notif.replace('{name}', name));
     
     document.getElementById('booking-form').reset();
     selectedSlot = null;
     renderCalendarUI();
-    showSuccessPanel(payload);
-
-    if (WEBHOOK_URL.startsWith("http")) {
-        try {
-            fetch(WEBHOOK_URL, {
-                method: "POST",
-                mode: 'no-cors',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-        } catch (err) {
-            console.error("Sync error", err);
-        }
-    }
+    showSuccessPanel(bookingToSave);
 });
 
 function updateHeaderProgress(step) {

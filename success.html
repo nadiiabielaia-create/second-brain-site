@@ -127,9 +127,11 @@
                 label_email: "Email клієнта:",
                 btn_tg: "Приєднатися до Telegram",
                 btn_home: "На головну",
+                btn_book_calendar: "📅 Забронювати сесію в Календарі",
                 foot_copy: "Всі права захищено.",
                 desc_inbox: "📧 Посилання на уроки міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вашу електронну адресу відразу після підтвердження оплати.<br/><br/>Будь ласка, перевірте поштову скриньку (включаючи папки <em>Спам</em> та <em>Промоакції</em>, якщо лист не надійшов).",
                 desc_sprint: "💡 Ваше місце в групі <strong>\"Нейро-Спринт\"</strong> заброньовано (сплачено завдаток 700 грн)!<br/><br/>Ми зв'яжемося з вами в Telegram або поштою для узгодження дати старту, коли набереться мінімальний склад.<br/><br/>Доступ до Міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вказану пошту.",
+                desc_audit: "📅 <strong>Оплата успішна!</strong> Тепер оберіть зручний день та час нашої сесії у календарі, щоб зафіксувати зустріч.",
                 desc_default: "Дякуємо за оплату! Вся інформація та інструкції надіслані на вашу електронну пошту."
             },
             en: {
@@ -139,9 +141,11 @@
                 label_email: "Client Email:",
                 btn_tg: "Join Telegram Channel",
                 btn_home: "Back to Homepage",
+                btn_book_calendar: "📅 Book your session in Calendar",
                 foot_copy: "All rights reserved.",
                 desc_inbox: "📧 The link to the <strong>\"Digital Inbox\"</strong> mini-course lessons has been sent to your email address.<br/><br/>Please check your inbox (including <em>Spam</em> and <em>Promotions</em> folders if the email has not arrived).",
                 desc_sprint: "💡 Your spot in the <strong>\"Neuro-Sprint\"</strong> group is successfully reserved (700 UAH deposit paid)!<br/><br/>We will contact you via Telegram or email to agree on the start date once the minimum group is formed.<br/><br/>Access to the <strong>\"Digital Inbox\"</strong> Mini-course has already been sent to your email.",
+                desc_audit: "📅 <strong>Payment successful!</strong> Please choose a convenient day and time for our session in the calendar to finalize your booking.",
                 desc_default: "Thank you for your payment! All information and instructions have been sent to your email."
             },
             fr: {
@@ -151,9 +155,11 @@
                 label_email: "E-mail du client :",
                 btn_tg: "Rejoindre Telegram",
                 btn_home: "Retour à l'accueil",
+                btn_book_calendar: "📅 Réserver votre séance dans le Calendrier",
                 foot_copy: "Tous droits réservés.",
                 desc_inbox: "📧 Le lien vers les leçons du mini-cours <strong>« Digital Inbox »</strong> a été envoyé sur votre adresse e-mail.<br/><br/>Veuillez vérifier votre boîte de réception (y compris les dossiers <em>Spam</em> et <em>Promotions</em> si l'e-mail n'est pas arrivé).",
                 desc_sprint: "💡 Votre place dans le groupe <strong>« Neuro-Sprint »</strong> est réservée (acompte de 700 UAH réglé) !<br/><br/>Nous vous contacterons par Telegram ou e-mail pour convenir de la date de début dès que le groupe minimal sera constitué.<br/><br/>L'accès au Mini-cours <strong>« Digital Inbox »</strong> a déjà été envoyé par e-mail.",
+                desc_audit: "📅 <strong>Paiement réussi !</strong> Veuillez choisir le jour et l'heure de votre séance dans le calendrier pour finaliser votre réservation.",
                 desc_default: "Merci pour votre paiement ! Toutes les informations et instructions ont été envoyées sur votre adresse e-mail."
             }
         };
@@ -173,7 +179,12 @@
             document.getElementById('success-title').textContent = t.heading;
             document.getElementById('label-product').textContent = t.label_product;
             document.getElementById('label-email').textContent = t.label_email;
-            document.getElementById('btn-tg-text').textContent = t.btn_tg;
+            
+            const btnTgTextEl = document.getElementById('btn-tg-text');
+            if (btnTgTextEl) {
+                btnTgTextEl.textContent = t.btn_tg;
+            }
+            
             document.getElementById('btn-home-text').textContent = t.btn_home;
             document.getElementById('foot-copy').textContent = t.foot_copy;
 
@@ -196,13 +207,41 @@
             document.getElementById('val-product').textContent = product;
             document.getElementById('val-email').textContent = email;
 
+            const btnTg = document.getElementById('btn-telegram');
             const descEl = document.getElementById('success-desc');
+            
             if (product === 'Нейро-Спринт') {
                 descEl.innerHTML = t.desc_sprint;
+                if (btnTg) {
+                    btnTg.href = "https://t.me/+OH-Z61radLZiMGRi";
+                    btnTg.target = "_blank";
+                    btnTg.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_tg + '</span>';
+                }
             } else if (product === 'Цифровий Inbox') {
                 descEl.innerHTML = t.desc_inbox;
+                if (btnTg) {
+                    btnTg.href = "https://t.me/+OH-Z61radLZiMGRi";
+                    btnTg.target = "_blank";
+                    btnTg.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_tg + '</span>';
+                }
+            } else if (product === 'Когнітивний Аудит' || product === 'Архітектор Систем') {
+                descEl.innerHTML = t.desc_audit;
+                if (btnTg) {
+                    btnTg.href = "index.html?status=success&product=audit";
+                    btnTg.target = "_self";
+                    btnTg.innerHTML = '<i data-lucide="calendar" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_book_calendar + '</span>';
+                }
             } else {
                 descEl.innerHTML = t.desc_default;
+                if (btnTg) {
+                    btnTg.href = "https://t.me/+OH-Z61radLZiMGRi";
+                    btnTg.target = "_blank";
+                    btnTg.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_tg + '</span>';
+                }
+            }
+
+            if (window.lucide) {
+                lucide.createIcons();
             }
         }
 
