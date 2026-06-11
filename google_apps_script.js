@@ -14,6 +14,7 @@ const NOTION_MINICOURSE_LINK = "https://app.notion.com/p/Mimi-course-372dadbdbc9
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    logToSheet("doPost Triggered", "Info", "Payload: " + e.postData.contents);
     
     // 1. Обробити Webhook від WayForPay
     if (data.transactionStatus && data.merchantAccount === "t_me_d09a8") {
@@ -37,8 +38,10 @@ function doPost(e) {
         const checkSignature = bytesToHex(checkSigBytes);
         
         if (checkSignature !== data.merchantSignature) {
-          Logger.log("WayForPay Webhook signature mismatch!");
+          logToSheet("Signature Check", "Failed", "Sig mismatch. String: " + checkSigString + ". Expected: " + checkSignature + ", Got: " + data.merchantSignature);
           verified = false;
+        } else {
+          logToSheet("Signature Check", "Success", "Signature matches. Order: " + data.orderReference);
         }
       }
       
@@ -70,7 +73,7 @@ function doPost(e) {
         }
         
         if (isDuplicate) {
-          Logger.log("Duplicate orderReference: " + orderRef + ". Skipping processing.");
+          logToSheet("Process Order", "Skip", "Duplicate order skipped: " + orderRef);
           return sendWayForPayResponse(data, secretKey);
         }
         
@@ -86,6 +89,7 @@ function doPost(e) {
           phone,
           productName
         ]);
+        logToSheet("Process Order", "Success", "Recorded payment to sheets for Order: " + orderRef);
         
         // в) Передача в CRM
         if (CRM_WEBHOOK_URL) {
@@ -103,8 +107,9 @@ function doPost(e) {
                 status: data.transactionStatus
               })
             });
+            logToSheet("CRM Webhook", "Success", "Sent data for Order: " + orderRef);
           } catch (crmErr) {
-            Logger.log("CRM error: " + crmErr.toString());
+            logToSheet("CRM Webhook", "Error", crmErr.toString());
           }
         }
         
@@ -129,31 +134,15 @@ function doPost(e) {
           );
           
           if (!isAudit) {
-            if (pNameLower.indexOf("цифровий inbox") !== -1) {
-              subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
-              htmlBody = `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                  <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
-                    <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
-                  </div>
-                  
-                  <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
-                  <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
-                  <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
-                  
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
-                      👉 Отримати доступ в Notion
-                    </a>
-                  </div>
-                  
-                  <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-                  <p style="font-size: 13px; color: #64748b;">Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.</p>
-                  <p style="font-size: 13px; color: #64748b; margin-top: 8px;">З повагою,<br/>Команда LevelUp.Strategy</p>
-                </div>
-              `;
-            } else if (pNameLower.indexOf("нейро-спринт") !== -1) {
+            // Надійний пошук ключових слів для продуктів
+            const isSprint = (
+              pNameLower.indexOf("спринт") !== -1 ||
+              pNameLower.indexOf("sprint") !== -1 ||
+              pNameLower.indexOf("нейро") !== -1 ||
+              pNameLower.indexOf("neuro") !== -1
+            );
+            
+            if (isSprint) {
               subject = "Ваше місце заброньовано: Нейро-Спринт!";
               htmlBody = `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
@@ -178,20 +167,52 @@ function doPost(e) {
                   <p style="font-size: 13px; color: #64748b;">З повагою,<br/>Команда LevelUp.Strategy</p>
                 </div>
               `;
+            } else {
+              // За замовчуванням надсилаємо міні-курс "Цифровий Inbox"
+              subject = "Ваш доступ до Міні-курсу 'Цифровий Inbox'";
+              htmlBody = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #10b981; margin: 0;">LevelUp.Strategy</h2>
+                    <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Цифровий розгін вашої продуктивності</p>
+                  </div>
+                  
+                  <p>Вітаємо, <strong>${data.clientFirstName || 'Друже'}</strong>!</p>
+                  <p>Дякуємо за успішне придбання нашого продукту: <strong>${productName}</strong>.</p>
+                  <p>Твій "Зовнішній мозок" готовий до розгортання! Для доступу до Notion-мінікурсу перейди за посиланням нижче:</p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${NOTION_MINICOURSE_LINK}" target="_blank" style="background-color: #10b981; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 30px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                      👉 Отримати доступ в Notion
+                    </a>
+                  </div>
+                  
+                  <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                  <p style="font-size: 13px; color: #64748b;">Якщо виникнуть запитання або проблеми з доступом, напишіть нам у підтримку Telegram.</p>
+                  <p style="font-size: 13px; color: #64748b; margin-top: 8px;">З повагою,<br/>Команда LevelUp.Strategy</p>
+                </div>
+              `;
             }
+          } else {
+            logToSheet("Send Email", "Skip", "Audit product detected, skipping welcome email: " + productName);
           }
           
           if (htmlBody) {
+            logToSheet("Send Email", "Attempting", "Sending to: " + email + ", Subject: " + subject);
             MailApp.sendEmail({
               to: email,
               subject: subject,
               htmlBody: htmlBody
             });
+            logToSheet("Send Email", "Success", "Email sent successfully to: " + email);
           }
         } catch (mailErr) {
-          Logger.log("Email error: " + mailErr.toString());
+          logToSheet("Send Email", "Error", mailErr.toString());
         }
         
+        return sendWayForPayResponse(data, secretKey);
+      } else {
+        logToSheet("Process Order", "Skip", "Transaction status is not Approved: " + (data ? data.transactionStatus : "undefined"));
         return sendWayForPayResponse(data, secretKey);
       }
     }
@@ -342,6 +363,7 @@ Email: ${email}
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {
+    logToSheet("doPost Error", "Fatal", error.toString());
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -556,4 +578,18 @@ function runLocalTest() {
   ]);
   Logger.log("✔️ Рядок успішно записано у вкладку 'Оплати'!");
   Logger.log("✔️ Тестовий лист успішно надіслано на пошту: " + mockPayload.email);
+}
+
+// Допоміжна функція для логування в таблицю "Логи"
+function logToSheet(action, status, details) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let logSheet = ss.getSheetByName("Логи") || ss.insertSheet("Логи");
+    if (logSheet.getLastRow() === 0) {
+      logSheet.appendRow(["Дата", "Дія", "Статус", "Деталі"]);
+    }
+    logSheet.appendRow([new Date(), action, status, details]);
+  } catch (err) {
+    Logger.log("Logging failed: " + err.toString());
+  }
 }
