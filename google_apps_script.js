@@ -397,15 +397,65 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    // Список платежів для діагностики
+    if (action === "listPayments") {
+      const email = e.parameter.email;
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const paymentSheet = ss.getSheetByName("Оплати");
+      const list = [];
+      if (paymentSheet) {
+        const lastRow = paymentSheet.getLastRow();
+        if (lastRow > 1) {
+          const data = paymentSheet.getRange(2, 1, lastRow - 1, 9).getValues();
+          for (let i = 0; i < data.length; i++) {
+            if (data[i][6] && data[i][6].toLowerCase() === email.toLowerCase()) {
+              list.push({
+                index: i + 2,
+                date: data[i][0] ? data[i][0].toString() : "null",
+                dateMs: data[i][0] ? new Date(data[i][0]).getTime() : 0,
+                status: data[i][4],
+                product: data[i][8]
+              });
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", list: list }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Перевірка успішності оплати за базою даних
     if (action === "checkPayment") {
       const email = e.parameter.email;
-      const payStartTime = e.parameter.payStartTime;
-      const payStartTimeParsed = payStartTime ? parseInt(payStartTime) : 0;
       const result = { status: "pending" };
       
       if (email && email !== "-") {
         const ss = SpreadsheetApp.getActiveSpreadsheet();
+        
+        // 1. Визначаємо час останнього ліда (спроби оплати) для цього email на сервері
+        let lastLeadTime = 0;
+        const leadSheet = ss.getSheetByName("Ліди");
+        if (leadSheet) {
+          const leadLastRow = leadSheet.getLastRow();
+          if (leadLastRow > 1) {
+            const leadData = leadSheet.getRange(2, 1, leadLastRow - 1, 4).getValues();
+            // Шукаємо останній запис (знизу вгору)
+            for (let i = leadData.length - 1; i >= 0; i--) {
+              const contactInfo = String(leadData[i][1] || "");
+              if (contactInfo.toLowerCase().indexOf(email.trim().toLowerCase()) !== -1) {
+                const leadDate = new Date(leadData[i][0]);
+                lastLeadTime = leadDate.getTime();
+                break;
+              }
+            }
+          }
+        }
+        
+        // Якщо ліда не знайдено, беремо замовчуванням останні 15 хвилин
+        if (lastLeadTime === 0) {
+          lastLeadTime = new Date().getTime() - (15 * 60 * 1000);
+        }
+        
         const paymentSheet = ss.getSheetByName("Оплати");
         if (paymentSheet) {
           const lastRow = paymentSheet.getLastRow();
@@ -423,7 +473,7 @@ function doGet(e) {
               if (rowEmail && rowEmail.trim().toLowerCase() === email.trim().toLowerCase() && 
                   rowStatus === "Approved" && 
                   (nowMs - rowDate.getTime()) < 24 * 60 * 60 * 1000 &&
-                  (payStartTimeParsed === 0 || rowDate.getTime() > (payStartTimeParsed - 60 * 1000))) {
+                  rowDate.getTime() > (lastLeadTime - 60 * 1000)) { // платіж після ліда (або -1 хв)
                 result.status = "success";
                 result.product = rowProduct;
                 break;
