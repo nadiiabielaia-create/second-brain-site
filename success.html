@@ -141,7 +141,9 @@
                 desc_default: "Дякуємо за оплату! Вся інформація та інструкції надіслані на вашу електронну пошту.",
                 desc_fail_prefix: "На жаль, ваш платіж не було успішно підтверджено платіжною системою.",
                 desc_fail_suffix: "<br/><br/>Будь ласка, перевірте правильність введених даних картки (включаючи CVV, термін дії, ліміти інтернет-платежів або баланс) та спробуйте ще раз.",
-                desc_checking: "⏳ Очікуємо підтвердження платежу від банку... Це може зайняти до 1 хвилини. Будь ласка, не закривайте сторінку."
+                desc_checking: "⏳ Очікуємо підтвердження платежу від банку... Це може зайняти до 1 хвилини. Будь ласка, не закривайте сторінку.",
+                desc_checking_processing: "⏳ Ваш платіж прийнято в обробку платіжною системою (WayForPay). Очікуємо підтвердження від банку.<br/><br/>Це стандартна процедура перевірки безпеки. Зазвичай вона займає від 1 до 5 хвилин. Будь ласка, зачекайте на цій сторінці — ми автоматично оновимо статус, щойно отримаємо відповідь.",
+                desc_fail_processing: "⚠️ Платіж все ще обробляється банком / платіжною системою.<br/><br/>Якщо кошти з картки вже списано, <strong>не хвилюйтеся</strong>. Доступ до матеріалів буде надіслано на вашу пошту автоматично, як тільки статус зміниться на успішний.<br/><br/>Ви можете натиснути кнопку <strong>«Перевірити оплату ще раз»</strong> нижче, або перевірити поштову скриньку пізніше."
             },
             en: {
                 title: "Payment Successful! | LevelUp.Strategy",
@@ -164,7 +166,9 @@
                 desc_default: "Thank you for your payment! All information and instructions have been sent to your email.",
                 desc_fail_prefix: "Unfortunately, your payment was not approved by the payment system.",
                 desc_fail_suffix: "<br/><br/>Please check your card details (including CVV, expiration date, internet transaction limits, or balance) and try again.",
-                desc_checking: "⏳ Waiting for payment confirmation from the bank... This can take up to 1 minute. Please do not close the page."
+                desc_checking: "⏳ Waiting for payment confirmation from the bank... This can take up to 1 minute. Please do not close the page.",
+                desc_checking_processing: "⏳ Your payment is accepted for processing by WayForPay. Waiting for bank confirmation.<br/><br/>This is a standard security verification procedure that can take 1 to 5 minutes. Please stay on this page — we will automatically redirect you once approved.",
+                desc_fail_processing: "⚠️ Payment is still being processed by the payment system.<br/><br/>If funds were debited, <strong>do not worry</strong>. Access to materials will be sent to your email automatically once the status changes to successful.<br/><br/>You can click <strong>\"Check payment status again\"</strong> below or check your email later."
             },
             fr: {
                 title: "Paiement Réussi ! | LevelUp.Strategy",
@@ -187,7 +191,9 @@
                 desc_default: "Merci pour votre paiement ! Toutes les informations et instructions ont été envoyées sur votre adresse e-mail.",
                 desc_fail_prefix: "Malheureusement, votre paiement n'a pas été validé by le système de paiement.",
                 desc_fail_suffix: "<br/><br/>Veuillez vérifier les informations de votre carte (y compris le code CVV, la date d'expiration, les limites d'achats en ligne ou le solde) et réessayer.",
-                desc_checking: "⏳ En attente de la confirmation du paiement par la banque... Cela peut prendre jusqu'à 1 minute. Veuillez ne pas fermer cette page."
+                desc_checking: "⏳ En attente de la confirmation du paiement par la banque... Cela peut prendre jusqu'à 1 minute. Veuillez ne pas fermer cette page.",
+                desc_checking_processing: "⏳ Votre paiement a été accepté pour traitement par WayForPay. En attente de la confirmation de la banque.<br/><br/>Il s'agit d'une procédure de sécurité standard qui peut prendre de 1 à 5 minutes. Veuillez patienter — nous vous redirigerons automatiquement.",
+                desc_fail_processing: "⚠️ Le paiement est toujours en cours de traitement par la banque / le système.<br/><br/>Si les fonds ont été débités, <strong>ne vous inquiétez pas</strong>. L'accès aux cours sera envoyé à votre e-mail dès validation.<br/><br/>Vous pouvez cliquer sur <strong>« Vérifier à nouveau le statut »</strong> ou consulter vos e-mails plus tard."
             }
         };
 
@@ -198,6 +204,7 @@
         let currentLanguage = localStorage.getItem('levelup_lang') || 'ua';
         let globalPaymentState = 'checking'; 
         let globalErrorMsg = '';
+        let wasRedirectedAsProcessing = false;
         let pollCount = 0;
         const maxPolls = 20; // 20 polls * 3s = 60s total timeout
         const pollInterval = 3000;
@@ -239,7 +246,7 @@
                     iconContainer.innerHTML = '<i data-lucide="loader-2" class="w-12 h-12 stroke-[1.5] animate-spin text-emerald-green"></i>';
                 }
 
-                descEl.innerHTML = t.desc_checking;
+                descEl.innerHTML = wasRedirectedAsProcessing ? t.desc_checking_processing : t.desc_checking;
                 if (btnTg) {
                     btnTg.style.display = 'none';
                 }
@@ -326,8 +333,12 @@
                     btnHomeText.textContent = t.btn_retry;
                 }
 
-                const displayReason = globalErrorMsg ? `<div class="mt-2 text-red-600 font-medium bg-red-50/50 p-3 rounded-xl border border-red-100 text-sm">⚠️ ${globalErrorMsg}</div>` : '';
-                descEl.innerHTML = `${t.desc_fail_prefix}${displayReason}${t.desc_fail_suffix}`;
+                if (wasRedirectedAsProcessing) {
+                    descEl.innerHTML = t.desc_fail_processing;
+                } else {
+                    const displayReason = globalErrorMsg ? `<div class="mt-2 text-red-600 font-medium bg-red-50/50 p-3 rounded-xl border border-red-100 text-sm">⚠️ ${globalErrorMsg}</div>` : '';
+                    descEl.innerHTML = `${t.desc_fail_prefix}${displayReason}${t.desc_fail_suffix}`;
+                }
             }
 
             // Highlight active lang btn
@@ -358,6 +369,9 @@
             const reason = urlParams.get('reason') || urlParams.get('errDescription') || '';
 
             const processingStatuses = ['InProcessing', 'Pending', 'Processing'];
+            if (processingStatuses.includes(transactionStatus)) {
+                wasRedirectedAsProcessing = true;
+            }
 
             // 1. Check if we bypass with test mode or have explicit status
             if (isTestMode || transactionStatus === 'Approved') {
