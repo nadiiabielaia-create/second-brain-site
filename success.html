@@ -125,6 +125,8 @@
                 heading: "Оплата успішна!",
                 title_fail: "Помилка оплати | LevelUp.Strategy",
                 heading_fail: "Оплату не підтверджено",
+                title_checking: "Перевірка оплати... | LevelUp.Strategy",
+                heading_checking: "Перевірка статусу платежу",
                 label_product: "Продукт:",
                 label_email: "Email клієнта:",
                 btn_tg: "Приєднатися до Telegram",
@@ -137,13 +139,16 @@
                 desc_audit: "📅 <strong>Оплата успішна!</strong> Тепер оберіть зручний день та час нашої сесії у календарі, щоб зафіксувати зустріч.",
                 desc_default: "Дякуємо за оплату! Вся інформація та інструкції надіслані на вашу електронну пошту.",
                 desc_fail_prefix: "На жаль, ваш платіж не було успішно підтверджено платіжною системою.",
-                desc_fail_suffix: "<br/><br/>Будь ласка, перевірте правильність введених даних картки (включаючи CVV, термін дії, ліміти інтернет-платежів або баланс) та спробуйте ще раз."
+                desc_fail_suffix: "<br/><br/>Будь ласка, перевірте правильність введених даних картки (включаючи CVV, термін дії, ліміти інтернет-платежів або баланс) та спробуйте ще раз.",
+                desc_checking: "⏳ Будь ласка, зачекайте. Ми отримуємо підтвердження платежу від платіжної системи. Це може зайняти до 15-20 секунд..."
             },
             en: {
                 title: "Payment Successful! | LevelUp.Strategy",
                 heading: "Payment Successful!",
                 title_fail: "Payment Failed | LevelUp.Strategy",
                 heading_fail: "Payment Not Confirmed",
+                title_checking: "Verifying Payment... | LevelUp.Strategy",
+                heading_checking: "Checking Payment Status",
                 label_product: "Product:",
                 label_email: "Client Email:",
                 btn_tg: "Join Telegram Channel",
@@ -156,13 +161,16 @@
                 desc_audit: "📅 <strong>Payment successful!</strong> Please choose a convenient day and time for our session in the calendar to finalize your booking.",
                 desc_default: "Thank you for your payment! All information and instructions have been sent to your email.",
                 desc_fail_prefix: "Unfortunately, your payment was not approved by the payment system.",
-                desc_fail_suffix: "<br/><br/>Please check your card details (including CVV, expiration date, internet transaction limits, or balance) and try again."
+                desc_fail_suffix: "<br/><br/>Please check your card details (including CVV, expiration date, internet transaction limits, or balance) and try again.",
+                desc_checking: "⏳ Please wait. We are waiting for payment confirmation from the payment gateway. This may take up to 15-20 seconds..."
             },
             fr: {
                 title: "Paiement Réussi ! | LevelUp.Strategy",
                 heading: "Paiement Réussi !",
                 title_fail: "Paiement Échoué | LevelUp.Strategy",
                 heading_fail: "Paiement Non Confirmé",
+                title_checking: "Vérification du paiement... | LevelUp.Strategy",
+                heading_checking: "Vérification du statut du paiement",
                 label_product: "Produit :",
                 label_email: "E-mail du client :",
                 btn_tg: "Rejoindre Telegram",
@@ -174,13 +182,20 @@
                 desc_sprint: "💡 Votre place dans le groupe <strong>« Neuro-Sprint »</strong> est réservée (acompte de 700 UAH réglé) !<br/><br/>Nous vous contacterons par Telegram ou e-mail pour convenir de la date de début dès que le groupe minimal sera constitué.<br/><br/>L'accès au Mini-cours <strong>« Digital Inbox »</strong> a déjà été envoyé par e-mail.",
                 desc_audit: "📅 <strong>Paiement réussi !</strong> Veuillez choisir le jour et l'heure de votre séance dans le calendrier pour finaliser votre réservation.",
                 desc_default: "Merci pour votre paiement ! Toutes les informations et instructions ont été envoyées sur votre adresse e-mail.",
-                desc_fail_prefix: "Malheureusement, votre paiement n'a pas été validé par le système de paiement.",
-                desc_fail_suffix: "<br/><br/>Veuillez vérifier les informations de votre carte (y compris le code CVV, la date d'expiration, les limites d'achats en ligne ou le solde) et réessayer."
+                desc_fail_prefix: "Malheureusement, votre paiement n'a pas été validé by le système de paiement.",
+                desc_fail_suffix: "<br/><br/>Veuillez vérifier les informations de votre carte (y compris le code CVV, la date d'expiration, les limites d'achats en ligne ou le solde) et réessayer.",
+                desc_checking: "⏳ Veuillez patienter. Nous attendons la confirmation du paiement de la part de la passerelle de paiement. Cela peut prendre de 15 à 20 secondes..."
             }
         };
 
-        // State
+        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzGBvTV0rnshMGmODoeXwiI4gKC-A_IOnkZ9fOC3ZLUvIpXnfmhGSj9VmWOGExtp87zgQ/exec";
+
         let currentLanguage = localStorage.getItem('levelup_lang') || 'ua';
+        let globalPaymentState = 'checking'; 
+        let globalErrorMsg = '';
+        let pollCount = 0;
+        const maxPolls = 6;
+        const pollInterval = 3000;
 
         function changeLanguage(lang) {
             currentLanguage = lang;
@@ -191,27 +206,9 @@
         function updateUI() {
             const t = TRANSLATIONS[currentLanguage] || TRANSLATIONS.ua;
 
-            // Get payment verification parameters from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const transactionStatus = urlParams.get('transactionStatus');
-            const reason = urlParams.get('reason') || urlParams.get('errDescription') || '';
             const email = sessionStorage.getItem('pay_client_email') || '-';
-
-            // Test mode if email contains 'test'
-            const isTestMode = email.toLowerCase().includes('test');
-            
-            // Success condition
-            let isSuccess = true;
-            if (!isTestMode && transactionStatus !== null && transactionStatus !== 'Approved') {
-                isSuccess = false;
-            }
-
-            const iconContainer = document.getElementById('status-icon-container');
-            const titleEl = document.getElementById('success-title');
-            const descEl = document.getElementById('success-desc');
-            const btnTg = document.getElementById('btn-telegram');
-
             const product = sessionStorage.getItem('user_intent_tariff') || 'Цифровий Inbox';
+
             document.getElementById('val-product').textContent = product;
             document.getElementById('val-email').textContent = email;
 
@@ -220,8 +217,26 @@
             document.getElementById('btn-home-text').textContent = t.btn_home;
             document.getElementById('foot-copy').textContent = t.foot_copy;
 
-            if (isSuccess) {
-                // SUCCESS STATE
+            const iconContainer = document.getElementById('status-icon-container');
+            const titleEl = document.getElementById('success-title');
+            const descEl = document.getElementById('success-desc');
+            const btnTg = document.getElementById('btn-telegram');
+
+            if (globalPaymentState === 'checking') {
+                document.title = t.title_checking;
+                titleEl.textContent = t.heading_checking;
+                titleEl.className = "text-3xl font-bold mb-4 text-deep-slate";
+                
+                if (iconContainer) {
+                    iconContainer.className = "w-20 h-20 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-6 text-slate-500 animate-pulse";
+                    iconContainer.innerHTML = '<i data-lucide="loader-2" class="w-12 h-12 stroke-[1.5] animate-spin text-emerald-green"></i>';
+                }
+
+                descEl.innerHTML = t.desc_checking;
+                if (btnTg) {
+                    btnTg.style.display = 'none';
+                }
+            } else if (globalPaymentState === 'success') {
                 document.title = t.title;
                 titleEl.textContent = t.heading;
                 titleEl.className = "text-3xl font-bold mb-4 text-deep-slate";
@@ -229,6 +244,10 @@
                 if (iconContainer) {
                     iconContainer.className = "w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-6 text-emerald-green animate-pulse";
                     iconContainer.innerHTML = '<i data-lucide="check-circle" class="w-12 h-12 stroke-[1.5]"></i>';
+                }
+
+                if (btnTg) {
+                    btnTg.style.display = 'flex';
                 }
 
                 if (product === 'Нейро-Спринт') {
@@ -265,7 +284,6 @@
                     }
                 }
             } else {
-                // FAILURE STATE
                 document.title = t.title_fail;
                 titleEl.textContent = t.heading_fail;
                 titleEl.className = "text-3xl font-bold mb-4 text-red-600";
@@ -275,7 +293,11 @@
                     iconContainer.innerHTML = '<i data-lucide="x-circle" class="w-12 h-12 stroke-[1.5]"></i>';
                 }
 
-                const displayReason = reason ? `<div class="mt-2 text-red-600 font-medium bg-red-50/50 p-3 rounded-xl border border-red-100 text-sm">⚠️ ${reason}</div>` : '';
+                if (btnTg) {
+                    btnTg.style.display = 'flex';
+                }
+
+                const displayReason = globalErrorMsg ? `<div class="mt-2 text-red-600 font-medium bg-red-50/50 p-3 rounded-xl border border-red-100 text-sm">⚠️ ${globalErrorMsg}</div>` : '';
                 descEl.innerHTML = `${t.desc_fail_prefix}${displayReason}${t.desc_fail_suffix}`;
 
                 if (btnTg) {
@@ -305,16 +327,85 @@
             }
         }
 
+        async function verifyPayment() {
+            const email = sessionStorage.getItem('pay_client_email') || '-';
+            const isTestMode = email.toLowerCase().includes('test');
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const transactionStatus = urlParams.get('transactionStatus');
+            const reason = urlParams.get('reason') || urlParams.get('errDescription') || '';
+
+            if (isTestMode || transactionStatus === 'Approved') {
+                globalPaymentState = 'success';
+                updateUI();
+                return;
+            }
+
+            if (transactionStatus !== null && transactionStatus !== 'Approved') {
+                globalPaymentState = 'failed';
+                globalErrorMsg = reason || 'Payment declined by card issuer';
+                updateUI();
+                return;
+            }
+
+            if (email === '-' || email === '') {
+                globalPaymentState = 'failed';
+                globalErrorMsg = 'Немає email для перевірки платежу. Спробуйте сплатити знову.';
+                updateUI();
+                return;
+            }
+
+            globalPaymentState = 'checking';
+            updateUI();
+            pollCount = 0;
+            doPoll();
+        }
+
+        async function doPoll() {
+            const email = sessionStorage.getItem('pay_client_email') || '-';
+            try {
+                const url = `${WEBHOOK_URL}?action=checkPayment&email=${encodeURIComponent(email)}&t=${Date.now()}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (data.product) {
+                        sessionStorage.setItem('user_intent_tariff', data.product);
+                    }
+                    globalPaymentState = 'success';
+                    updateUI();
+                } else {
+                    pollCount++;
+                    if (pollCount < maxPolls) {
+                        setTimeout(doPoll, pollInterval);
+                    } else {
+                        globalPaymentState = 'failed';
+                        globalErrorMsg = 'Оплату не підтверджено в системі (перевищено час очікування). Якщо кошти списано, зверніться в підтримку.';
+                        updateUI();
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+                pollCount++;
+                if (pollCount < maxPolls) {
+                    setTimeout(doPoll, pollInterval);
+                } else {
+                    globalPaymentState = 'failed';
+                    globalErrorMsg = 'Помилка зв\'язку при перевірці оплати.';
+                    updateUI();
+                }
+            }
+        }
+
         function goHome() {
             window.location.href = "index.html";
         }
 
-        // Init page
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 lucide.createIcons();
             } catch(e) {}
-            updateUI();
+            verifyPayment();
         });
     </script>
 </body>

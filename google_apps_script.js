@@ -397,6 +397,48 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    // Перевірка успішності оплати за базою даних
+    if (action === "checkPayment") {
+      const email = e.parameter.email;
+      const result = { status: "pending" };
+      
+      if (email && email !== "-") {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        const paymentSheet = ss.getSheetByName("Оплати");
+        if (paymentSheet) {
+          const lastRow = paymentSheet.getLastRow();
+          if (lastRow > 1) {
+            const data = paymentSheet.getRange(2, 1, lastRow - 1, 9).getValues();
+            const nowMs = new Date().getTime();
+            
+            // Шукаємо знизу вгору (від найновіших)
+            for (let i = data.length - 1; i >= 0; i--) {
+              const rowDate = new Date(data[i][0]);
+              const rowStatus = data[i][4];
+              const rowEmail = data[i][6];
+              const rowProduct = data[i][8];
+              
+              if (rowEmail && rowEmail.toLowerCase() === email.toLowerCase() && 
+                  rowStatus === "Approved" && 
+                  (nowMs - rowDate.getTime()) < 15 * 60 * 1000) {
+                result.status = "success";
+                result.product = rowProduct;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      const callback = e.parameter.callback;
+      if (callback) {
+        return ContentService.createTextOutput(callback + '(' + JSON.stringify(result) + ')')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
     // Генерація підпису для WayForPay
     if (action === "getSignature") {
       const merchantAccount = "t_me_d09a8";
