@@ -133,6 +133,7 @@
                 btn_home: "На головну",
                 btn_retry: "Спробувати ще раз",
                 btn_book_calendar: "📅 Забронювати сесію в Календарі",
+                btn_check_again: "🔄 Перевірити оплату ще раз",
                 foot_copy: "Всі права захищено.",
                 desc_inbox: "📧 Посилання на уроки міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вашу електронну адресу відразу після підтвердження оплати.<br/><br/>Будь ласка, перевірте поштову скриньку (включаючи папки <em>Спам</em> та <em>Промоакції</em>, якщо лист не надійшов).",
                 desc_sprint: "💡 Ваше місце в групі <strong>\"Нейро-Спринт\"</strong> заброньовано (сплачено завдаток 700 грн)!<br/><br/>Ми зв'яжемося з вами в Telegram або поштою для узгодження дати старту, коли набереться мінімальний склад.<br/><br/>Доступ до Міні-курсу <strong>\"Цифровий Inbox\"</strong> вже надіслано на вказану пошту.",
@@ -140,7 +141,7 @@
                 desc_default: "Дякуємо за оплату! Вся інформація та інструкції надіслані на вашу електронну пошту.",
                 desc_fail_prefix: "На жаль, ваш платіж не було успішно підтверджено платіжною системою.",
                 desc_fail_suffix: "<br/><br/>Будь ласка, перевірте правильність введених даних картки (включаючи CVV, термін дії, ліміти інтернет-платежів або баланс) та спробуйте ще раз.",
-                desc_checking: "⏳ Будь ласка, зачекайте. Ми отримуємо підтвердження платежу від платіжної системи. Це може зайняти до 15-20 секунд..."
+                desc_checking: "⏳ Очікуємо підтвердження платежу від банку... Це може зайняти до 1 хвилини. Будь ласка, не закривайте сторінку."
             },
             en: {
                 title: "Payment Successful! | LevelUp.Strategy",
@@ -155,6 +156,7 @@
                 btn_home: "Back to Homepage",
                 btn_retry: "Try Again",
                 btn_book_calendar: "📅 Book your session in Calendar",
+                btn_check_again: "🔄 Check payment status again",
                 foot_copy: "All rights reserved.",
                 desc_inbox: "📧 The link to the <strong>\"Digital Inbox\"</strong> mini-course lessons has been sent to your email address.<br/><br/>Please check your inbox (including <em>Spam</em> and <em>Promotions</em> folders if the email has not arrived).",
                 desc_sprint: "💡 Your spot in the <strong>\"Neuro-Sprint\"</strong> group is successfully reserved (700 UAH deposit paid)!<br/><br/>We will contact you via Telegram or email to agree on the start date once the minimum group is formed.<br/><br/>Access to the <strong>\"Digital Inbox\"</strong> Mini-course has already been sent to your email.",
@@ -162,7 +164,7 @@
                 desc_default: "Thank you for your payment! All information and instructions have been sent to your email.",
                 desc_fail_prefix: "Unfortunately, your payment was not approved by the payment system.",
                 desc_fail_suffix: "<br/><br/>Please check your card details (including CVV, expiration date, internet transaction limits, or balance) and try again.",
-                desc_checking: "⏳ Please wait. We are waiting for payment confirmation from the payment gateway. This may take up to 15-20 seconds..."
+                desc_checking: "⏳ Waiting for payment confirmation from the bank... This can take up to 1 minute. Please do not close the page."
             },
             fr: {
                 title: "Paiement Réussi ! | LevelUp.Strategy",
@@ -177,6 +179,7 @@
                 btn_home: "Retour à l'accueil",
                 btn_retry: "Réessayer",
                 btn_book_calendar: "📅 Réserver votre séance dans le Calendrier",
+                btn_check_again: "🔄 Vérifier à nouveau le statut",
                 foot_copy: "Tous droits réservés.",
                 desc_inbox: "📧 Le lien vers les leçons du mini-cours <strong>« Digital Inbox »</strong> a été envoyé sur votre adresse e-mail.<br/><br/>Veuillez vérifier votre boîte de réception (y compris les dossiers <em>Spam</em> et <em>Promotions</em> si l'e-mail n'est pas arrivé).",
                 desc_sprint: "💡 Votre place dans le groupe <strong>« Neuro-Sprint »</strong> est réservée (acompte de 700 UAH réglé) !<br/><br/>Nous vous contacterons par Telegram ou e-mail pour convenir de la date de début dès que le groupe minimal sera constitué.<br/><br/>L'accès au Mini-cours <strong>« Digital Inbox »</strong> a déjà été envoyé par e-mail.",
@@ -184,17 +187,19 @@
                 desc_default: "Merci pour votre paiement ! Toutes les informations et instructions ont été envoyées sur votre adresse e-mail.",
                 desc_fail_prefix: "Malheureusement, votre paiement n'a pas été validé by le système de paiement.",
                 desc_fail_suffix: "<br/><br/>Veuillez vérifier les informations de votre carte (y compris le code CVV, la date d'expiration, les limites d'achats en ligne ou le solde) et réessayer.",
-                desc_checking: "⏳ Veuillez patienter. Nous attendons la confirmation du paiement de la part de la passerelle de paiement. Cela peut prendre de 15 à 20 secondes..."
+                desc_checking: "⏳ En attente de la confirmation du paiement par la banque... Cela peut prendre jusqu'à 1 minute. Veuillez ne pas fermer cette page."
             }
         };
 
+        // Web app URL configuration
         const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzGBvTV0rnshMGmODoeXwiI4gKC-A_IOnkZ9fOC3ZLUvIpXnfmhGSj9VmWOGExtp87zgQ/exec";
 
+        // State variables
         let currentLanguage = localStorage.getItem('levelup_lang') || 'ua';
         let globalPaymentState = 'checking'; 
         let globalErrorMsg = '';
         let pollCount = 0;
-        const maxPolls = 6;
+        const maxPolls = 20; // 20 polls * 3s = 60s total timeout
         const pollInterval = 3000;
 
         function changeLanguage(lang) {
@@ -206,7 +211,7 @@
         function updateUI() {
             const t = TRANSLATIONS[currentLanguage] || TRANSLATIONS.ua;
 
-            const email = sessionStorage.getItem('pay_client_email') || '-';
+            const email = (sessionStorage.getItem('pay_client_email') || '-').trim();
             const product = sessionStorage.getItem('user_intent_tariff') || 'Цифровий Inbox';
 
             document.getElementById('val-product').textContent = product;
@@ -221,6 +226,8 @@
             const titleEl = document.getElementById('success-title');
             const descEl = document.getElementById('success-desc');
             const btnTg = document.getElementById('btn-telegram');
+            const btnHome = document.getElementById('btn-home');
+            const btnHomeText = document.getElementById('btn-home-text');
 
             if (globalPaymentState === 'checking') {
                 document.title = t.title_checking;
@@ -236,6 +243,9 @@
                 if (btnTg) {
                     btnTg.style.display = 'none';
                 }
+                if (btnHome) {
+                    btnHome.style.display = 'none';
+                }
             } else if (globalPaymentState === 'success') {
                 document.title = t.title;
                 titleEl.textContent = t.heading;
@@ -249,8 +259,15 @@
                 if (btnTg) {
                     btnTg.style.display = 'flex';
                 }
+                if (btnHome) {
+                    btnHome.style.display = 'flex';
+                    btnHome.onclick = goHome;
+                }
+                if (btnHomeText) {
+                    btnHomeText.textContent = t.btn_home;
+                }
 
-                if (product === 'Нейро-Спринт') {
+                if (product.includes('Спринт') || product.includes('спринт') || product.includes('Sprint')) {
                     descEl.innerHTML = t.desc_sprint;
                     if (btnTg) {
                         btnTg.href = "https://t.me/+OH-Z61radLZiMGRi";
@@ -258,7 +275,7 @@
                         btnTg.className = "w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]";
                         btnTg.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_tg + '</span>';
                     }
-                } else if (product === 'Цифровий Inbox') {
+                } else if (product.includes('Inbox') || product.includes('inbox') || product.includes('Інбокс') || product.includes('інбокс')) {
                     descEl.innerHTML = t.desc_inbox;
                     if (btnTg) {
                         btnTg.href = "https://t.me/+OH-Z61radLZiMGRi";
@@ -266,7 +283,7 @@
                         btnTg.className = "w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]";
                         btnTg.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_tg + '</span>';
                     }
-                } else if (product === 'Когнітивний Аудит' || product === 'Архітектор Систем') {
+                } else if (product.includes('Аудит') || product.includes('аудит') || product.includes('Audit') || product.includes('Архітектор') || product.includes('систем') || product.includes('System') || product.includes('Architect')) {
                     descEl.innerHTML = t.desc_audit;
                     if (btnTg) {
                         btnTg.href = "index.html?status=success&product=audit";
@@ -284,6 +301,7 @@
                     }
                 }
             } else {
+                // FAILURE STATE
                 document.title = t.title_fail;
                 titleEl.textContent = t.heading_fail;
                 titleEl.className = "text-3xl font-bold mb-4 text-red-600";
@@ -295,17 +313,21 @@
 
                 if (btnTg) {
                     btnTg.style.display = 'flex';
+                    btnTg.href = "javascript:verifyPayment()";
+                    btnTg.target = "_self";
+                    btnTg.className = "w-full bg-emerald-green hover:bg-emerald-hover text-white font-semibold py-4 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98]";
+                    btnTg.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_check_again + '</span>';
+                }
+                if (btnHome) {
+                    btnHome.style.display = 'flex';
+                    btnHome.onclick = () => { window.location.href = "index.html#pricing"; };
+                }
+                if (btnHomeText) {
+                    btnHomeText.textContent = t.btn_retry;
                 }
 
                 const displayReason = globalErrorMsg ? `<div class="mt-2 text-red-600 font-medium bg-red-50/50 p-3 rounded-xl border border-red-100 text-sm">⚠️ ${globalErrorMsg}</div>` : '';
                 descEl.innerHTML = `${t.desc_fail_prefix}${displayReason}${t.desc_fail_suffix}`;
-
-                if (btnTg) {
-                    btnTg.href = "index.html#pricing";
-                    btnTg.target = "_self";
-                    btnTg.className = "w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98]";
-                    btnTg.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4"></i> <span id="btn-tg-text">' + t.btn_retry + '</span>';
-                }
             }
 
             // Highlight active lang btn
@@ -328,13 +350,14 @@
         }
 
         async function verifyPayment() {
-            const email = sessionStorage.getItem('pay_client_email') || '-';
+            const email = (sessionStorage.getItem('pay_client_email') || '-').trim();
             const isTestMode = email.toLowerCase().includes('test');
             
             const urlParams = new URLSearchParams(window.location.search);
             const transactionStatus = urlParams.get('transactionStatus');
             const reason = urlParams.get('reason') || urlParams.get('errDescription') || '';
 
+            // 1. Check if we bypass with test mode or have explicit status
             if (isTestMode || transactionStatus === 'Approved') {
                 globalPaymentState = 'success';
                 updateUI();
@@ -355,6 +378,7 @@
                 return;
             }
 
+            // 2. Otherwise, start active verification polling
             globalPaymentState = 'checking';
             updateUI();
             pollCount = 0;
@@ -362,7 +386,7 @@
         }
 
         async function doPoll() {
-            const email = sessionStorage.getItem('pay_client_email') || '-';
+            const email = (sessionStorage.getItem('pay_client_email') || '-').trim();
             try {
                 const url = `${WEBHOOK_URL}?action=checkPayment&email=${encodeURIComponent(email)}&t=${Date.now()}`;
                 const response = await fetch(url);
@@ -380,7 +404,7 @@
                         setTimeout(doPoll, pollInterval);
                     } else {
                         globalPaymentState = 'failed';
-                        globalErrorMsg = 'Оплату не підтверджено в системі (перевищено час очікування). Якщо кошти списано, зверніться в підтримку.';
+                        globalErrorMsg = 'Оплату не підтверджено в системі (перевищено час очікування). Якщо кошти списано, зачекайте 1-2 хвилини та натисніть кнопку «Перевірити оплату ще раз» нижче.';
                         updateUI();
                     }
                 }

@@ -418,9 +418,9 @@ function doGet(e) {
               const rowEmail = data[i][6];
               const rowProduct = data[i][8];
               
-              if (rowEmail && rowEmail.toLowerCase() === email.toLowerCase() && 
+              if (rowEmail && rowEmail.trim().toLowerCase() === email.trim().toLowerCase() && 
                   rowStatus === "Approved" && 
-                  (nowMs - rowDate.getTime()) < 15 * 60 * 1000) {
+                  (nowMs - rowDate.getTime()) < 24 * 60 * 60 * 1000) {
                 result.status = "success";
                 result.product = rowProduct;
                 break;
