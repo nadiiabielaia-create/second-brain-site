@@ -1015,6 +1015,10 @@ async function loadWeek() {
                 busySlots = data.busySlots || [];
                 calendarTimeZone = data.calendarTimeZone || "Europe/Kiev";
                 loadStatus = { success: true, message: 'Синхронізовано', error: null };
+                if (data.serverTime) {
+                    const offset = data.serverTime - Date.now();
+                    sessionStorage.setItem('server_clock_offset', offset.toString());
+                }
             } else {
                 const errMsg = data.message || "Unknown error";
                 showAtomicNotification("Error: " + errMsg, false);
@@ -1542,6 +1546,10 @@ async function submitPayment(event) {
     sessionStorage.setItem('pay_client_email', email);
     sessionStorage.setItem('pay_client_phone', phone);
     sessionStorage.setItem('user_intent_tariff', currentPaymentTariff);
+
+    const offset = parseInt(sessionStorage.getItem('server_clock_offset') || '0');
+    const payStartServerTime = Date.now() + offset;
+    sessionStorage.setItem('pay_start_time', payStartServerTime.toString());
 
     const payload = {
         action: "lead",

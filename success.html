@@ -387,8 +387,9 @@
 
         async function doPoll() {
             const email = (sessionStorage.getItem('pay_client_email') || '-').trim();
+            const payStartTime = sessionStorage.getItem('pay_start_time') || '0';
             try {
-                const url = `${WEBHOOK_URL}?action=checkPayment&email=${encodeURIComponent(email)}&t=${Date.now()}`;
+                const url = `${WEBHOOK_URL}?action=checkPayment&email=${encodeURIComponent(email)}&payStartTime=${payStartTime}&t=${Date.now()}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 

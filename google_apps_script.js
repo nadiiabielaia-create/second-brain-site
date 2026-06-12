@@ -400,6 +400,8 @@ function doGet(e) {
     // Перевірка успішності оплати за базою даних
     if (action === "checkPayment") {
       const email = e.parameter.email;
+      const payStartTime = e.parameter.payStartTime;
+      const payStartTimeParsed = payStartTime ? parseInt(payStartTime) : 0;
       const result = { status: "pending" };
       
       if (email && email !== "-") {
@@ -420,7 +422,8 @@ function doGet(e) {
               
               if (rowEmail && rowEmail.trim().toLowerCase() === email.trim().toLowerCase() && 
                   rowStatus === "Approved" && 
-                  (nowMs - rowDate.getTime()) < 24 * 60 * 60 * 1000) {
+                  (nowMs - rowDate.getTime()) < 24 * 60 * 60 * 1000 &&
+                  (payStartTimeParsed === 0 || rowDate.getTime() > (payStartTimeParsed - 60 * 1000))) {
                 result.status = "success";
                 result.product = rowProduct;
                 break;
@@ -507,6 +510,7 @@ function doGet(e) {
     
     const result = { 
       status: "success", 
+      serverTime: new Date().getTime(),
       busySlots: busySlots,
       calendarName: calendar.getName(),
       calendarId: calendar.getId(),
